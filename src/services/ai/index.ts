@@ -10,7 +10,30 @@ export { HuggingFaceProvider } from './providers/huggingface.js';
 export { MockProvider } from './providers/mock.js';
 export type { AiProvider, ProviderChatOptions, ProviderChatResult } from './providers/types.js';
 export { RateLimiter, type RateLimitDecision } from './rate-limit/limiter.js';
-export { UsageTracker, InMemoryUsageSink, type UsageEvent, type UsageSink } from './usage/tracker.js';
+export {
+  UsageTracker,
+  InMemoryUsageSink,
+  JsonlUsageSink,
+  isEventSource,
+  type UsageEvent,
+  type UsageEventSource,
+  type UsageSink,
+} from './usage/tracker.js';
+export { AlertingUsageSink, type AlertThresholds, type UsageAlert } from './usage/monitor.js';
+export {
+  DEFAULT_PRICING,
+  estimateCostUsd,
+  loadPricing,
+  type PriceEntry,
+  type PricingTable,
+} from './usage/pricing.js';
+export {
+  summarizeUsage,
+  summarizeLast,
+  type GroupStats,
+  type SummaryOptions,
+  type UsageSummary,
+} from './usage/metrics.js';
 export { createLogger, type AiLogger } from './logging/logger.js';
 export { NOOP_RETRIEVER, EmbeddingRetriever, type Retriever, type CorpusChunk } from './pipelines/retrieval.js';
 export {

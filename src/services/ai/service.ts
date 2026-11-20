@@ -4,7 +4,6 @@ import { HuggingFaceProvider } from './providers/huggingface.js';
 import { MockProvider } from './providers/mock.js';
 import type { AiProvider } from './providers/types.js';
 import { RateLimiter } from './rate-limit/limiter.js';
-import { UsageTracker, type UsageSink } from './usage/tracker.js';
 import { createLogger, type AiLogger } from './logging/logger.js';
 import { NOOP_RETRIEVER, type Retriever } from './pipelines/retrieval.js';
 import {
@@ -46,7 +45,20 @@ import {
   JsonlFeedbackStore,
   type FeedbackStore,
 } from './evaluators/feedback.js';
-import { handleReportRequest, type ReportHandlerDeps } from './http/handlers.js';
+import {
+  handleReportRequest,
+  handleUsageRequest,
+  type ReportHandlerDeps,
+} from './http/handlers.js';
+import {
+  InMemoryUsageSink,
+  JsonlUsageSink,
+  UsageTracker,
+  isEventSource,
+  type UsageSink,
+} from './usage/tracker.js';
+import { AlertingUsageSink, type AlertThresholds, type UsageAlert } from './usage/monitor.js';
+import { loadPricing } from './usage/pricing.js';
 import type { z } from 'zod';
 
 /**
@@ -67,6 +79,16 @@ export interface AiServiceDeps {
   rateLimiter?: RateLimiter;
   /** Store for incorrect-answer reports. Default: in-memory; set AI_FEEDBACK_PATH for JSONL persistence. */
   feedbackStore?: FeedbackStore;
+  /**
+   * Usage monitoring (issue #17). Defaults: JSONL sink when AI_USAGE_PATH is
+   * set (else in-memory ring), alerting thresholds, built-in cost estimates
+   * overridable via AI_PRICING_JSON. `alerts: false`-style disable: pass
+   * `{ enabled: false }` is NOT supported — set extremely high thresholds or
+   * provide a no-op usageSink instead.
+   */
+  usageAlerts?: (AlertThresholds & { onAlert?: (alert: UsageAlert) => void }) | undefined;
+  /** JSON overrides for the cost table (same shape as AI_PRICING_JSON). */
+  pricingOverrides?: string | undefined;
   /** Chat model tier: 'llmPrimary' | 'llmCostTier' | 'llmMoE' | 'llmJapaneseSpecialist'. */
   llmModel?: ModelKey;
 }
@@ -126,6 +148,8 @@ export interface AiService {
     synthesize: (req: Request) => Promise<Response>;
     embed: (req: Request) => Promise<Response>;
     report: (req: Request) => Promise<Response>;
+    /** GET — aggregated usage/cost summary. ADMIN-ONLY: protect at the host. */
+    usage: (req: Request) => Promise<Response>;
   };
 
   /** Infra accessors for monitoring/diagnostics. */
@@ -141,8 +165,24 @@ export interface AiService {
 export function createAiService(deps: AiServiceDeps = {}): AiService {
   const config = deps.config ?? loadAiConfig();
   const logger = deps.logger ?? createLogger('ai');
-  const usage = new UsageTracker(deps.usageSink);
   const rateLimiter = deps.rateLimiter ?? new RateLimiter({ ...config.rateLimit });
+
+  // Usage pipeline (issue #17): durable sink → alerting decorator → tracker.
+  // AI_USAGE_PATH persists events as JSONL; otherwise an in-memory ring.
+  const durableSink: UsageSink =
+    deps.usageSink ??
+    (process.env.AI_USAGE_PATH
+      ? new JsonlUsageSink(process.env.AI_USAGE_PATH)
+      : new InMemoryUsageSink());
+  const pricing = loadPricing(deps.pricingOverrides ?? process.env.AI_PRICING_JSON);
+  const alertSink = new AlertingUsageSink(durableSink, {
+    logger,
+    ...(deps.usageAlerts ?? {}),
+  });
+  const usage = new UsageTracker(alertSink, {
+    pricing,
+    ...(isEventSource(durableSink) ? { source: durableSink } : {}),
+  });
 
   // Provider selection: explicit override > HF (when token present) > mock.
   // AI_PROVIDER=mock forces the mock even with a token (local dev/e2e).
@@ -260,6 +300,7 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
       }),
       embed: json(embedBody, 'embedding', 'ai:embed', (b) => service.embed({ texts: b.texts })),
       report: (req: Request) => handleReportRequest(req, reportDeps),
+      usage: (req: Request) => handleUsageRequest(req, { usage }),
     },
 
     usage,
