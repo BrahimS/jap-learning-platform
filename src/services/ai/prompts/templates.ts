@@ -76,6 +76,8 @@ export function grammarExplainMessages(
           language,
           'You explain Japanese grammar structures to learners. Include: what it means, when to use it, ' +
             '2-3 example sentences with readings and translations, JLPT level (only if in curriculum data), ' +
+            'a side-by-side comparison with the most easily-confused similar structure (e.g. nuance and ' +
+            'usage differences), 2 practice exercises with verified answers, ' +
             'and the 2 most common learner mistakes.',
         ) + fenceContext(ctx),
     },
