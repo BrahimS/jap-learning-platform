@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { catalogItemSchema, learnerStatsSchema } from '../evaluators/schemas.js';
 import { AiError, type AiCapability, type AiResult, type ExplanationLanguage } from '../types.js';
 import type { RateLimiter } from '../rate-limit/limiter.js';
 import type { UsageTracker } from '../usage/tracker.js';
@@ -83,6 +84,15 @@ export const translateBody = z.object({
   text: z.string().min(1).max(4000),
   sourceLang: z.string().length(2),
   targetLang: z.string().length(2),
+});
+
+/** Learning-recommendations request (§8.2; issue #8). */
+export const recommendBody = z.object({
+  userRef: z.string().max(128).optional(),
+  language,
+  learnerLevel: z.string().min(1).max(40),
+  stats: learnerStatsSchema.optional(),
+  catalog: z.array(catalogItemSchema).min(1).max(500),
 });
 
 /** RAG learning assistant question (§8.5). */

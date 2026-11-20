@@ -80,6 +80,19 @@ function mockWithCanned() {
       }),
     },
     {
+      match: 'Generate the recommendation plan.',
+      content: JSON.stringify({
+        weakAreas: ['particles', 'kanji reading'],
+        recommendations: [
+          { itemId: 'vocab-taberu', kind: 'vocabulary', reason: 'core N5 verb', priority: 'high' },
+          { itemId: 'vocab-taberu', kind: 'vocabulary', reason: 'duplicate', priority: 'low' },
+          { itemId: 'invented-lesson-999', kind: 'lesson', reason: 'hallucinated', priority: 'high' },
+          { itemId: 'gram-takoto-ga-aru', kind: 'grammar', reason: 'fits weak area', priority: 'medium' },
+        ],
+        studyPlan: { focus: 'N5 particles', adjustments: ['10 min daily review'] },
+      }),
+    },
+    {
       match: 'TRANSLATE_ME',
       content: JSON.stringify({ translation: 'Hello', backTranslation: 'こんにちは' }),
     },
@@ -251,6 +264,50 @@ describe('RAG assistant (#15)', () => {
   it('ask handler rejects invalid body', async () => {
     const { svc } = makeService();
     const res = await svc.handlers.ask(post('/ask', { language: 'en' }));
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('learning recommendations (#8)', () => {
+  const catalog = [
+    { id: 'vocab-taberu', kind: 'vocabulary' as const, title: '食べる', jlptLevel: 'N5' as const },
+    { id: 'gram-takoto-ga-aru', kind: 'grammar' as const, title: '〜たことがある', jlptLevel: 'N4' as const },
+  ];
+
+  it('drops recommendations referencing non-catalog items', async () => {
+    const { svc } = makeService();
+    const res = await svc.recommendations({
+      language: 'en',
+      learnerLevel: 'N5',
+      stats: { weakAreas: ['particles'] },
+      catalog,
+    });
+    const ids = res.data.recommendations.map((r) => r.itemId);
+    expect(ids).not.toContain('invented-lesson-999');
+    expect(ids).toEqual(['vocab-taberu', 'gram-takoto-ga-aru']); // deduped, priority-sorted
+    expect(res.data.weakAreas).toContain('particles');
+  });
+
+  it('recommend handler validates and returns plan', async () => {
+    const { svc } = makeService();
+    const res = await svc.handlers.recommend(
+      post('/recommend', {
+        language: 'fr',
+        learnerLevel: 'N4',
+        catalog,
+      }),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.result.recommendations.length).toBeGreaterThan(0);
+  });
+
+  it('recommend handler rejects empty catalog', async () => {
+    const { svc } = makeService();
+    const res = await svc.handlers.recommend(
+      post('/recommend', { language: 'en', learnerLevel: 'N5', catalog: [] }),
+    );
     expect(res.status).toBe(400);
   });
 });
