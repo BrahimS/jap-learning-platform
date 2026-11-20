@@ -40,6 +40,8 @@ export interface AiResult<T> {
   capability: AiCapability;
   usage?: TokenUsage;
   provenance?: Provenance;
+  /** Pipeline diagnostics — e.g., count of invalid items dropped pre-serve. */
+  diagnostics?: Record<string, unknown>;
   latencyMs: number;
 }
 

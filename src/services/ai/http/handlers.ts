@@ -238,6 +238,7 @@ function metaOf(result: AiResult<unknown>) {
     latencyMs: result.latencyMs,
     usage: result.usage,
     provenance: result.provenance,
+    diagnostics: result.diagnostics,
   };
 }
 

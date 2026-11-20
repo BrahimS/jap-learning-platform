@@ -1,5 +1,5 @@
 import type { AiProvider } from '../providers/types.js';
-import type { AiResult, ChatMessage, ExplanationLanguage, Provenance } from '../types.js';
+import { AiError, type AiResult, type ChatMessage, type ExplanationLanguage, type Provenance } from '../types.js';
 import {
   assistantAnswerSchema,
   catalogItemSchema,
@@ -37,6 +37,7 @@ import {
   type RetrievedContext,
 } from '../prompts/templates.js';
 import { runStructuredChat, type PipelineDeps } from './context.js';
+import { validateQuiz } from './quiz-validation.js';
 import { align, verdictFor } from './alignment.js';
 
 function provOf(retrieved?: RetrievedContext): Provenance {
@@ -117,13 +118,28 @@ export async function runQuiz(
     retrieved?: RetrievedContext;
   },
 ): Promise<AiResult<Quiz>> {
-  return runStructuredChat(
+  const result = await runStructuredChat(
     { ...deps, capability: 'quiz' },
     quizMessages(input.language, input, input.retrieved),
     quizSchema,
     'quiz',
     provOf(input.retrieved),
   );
+  // §8.6: no unverified answer keys reach the learner — drop invalid
+  // questions deterministically; refuse to serve an all-invalid quiz.
+  const { questions, rejected } = validateQuiz(result.data);
+  if (questions.length === 0) {
+    throw new AiError(
+      'VALIDATION_ERROR',
+      'All generated quiz questions failed answer validation',
+      { detail: JSON.stringify(rejected.slice(0, 5)) },
+    );
+  }
+  return {
+    ...result,
+    data: { questions },
+    diagnostics: { rejectedQuestions: rejected.length },
+  };
 }
 
 export async function runWritingCorrection(
