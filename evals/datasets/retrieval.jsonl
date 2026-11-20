@@ -1,0 +1,8 @@
+{"id":"r01","kind":"retrieval","description":"EN learner query → experience grammar","input":{"query":"how do I say I have done something before in Japanese","topK":3},"expect":{"anySourceIn":["gram-takoto-ga-aru"]}}
+{"id":"r02","kind":"retrieval","description":"FR learner query → obligation grammar","input":{"query":"comment exprimer qu'on n'a pas le choix et qu'il faut absolument le faire","topK":3},"expect":{"anySourceIn":["gram-zaru-wo-enai","gram-wake-niwa-ikanai"]}}
+{"id":"r03","kind":"retrieval","description":"AR learner query → 'maybe' adverb","input":{"query":"كيف أقول ربما أو من الممكن","topK":3},"expect":{"anySourceIn":["gram-mo-shikashitara"]}}
+{"id":"r04","kind":"retrieval","description":"EN vocab query → 'to eat'","input":{"query":"Japanese verb meaning to eat","topK":3},"expect":{"anySourceIn":["vocab-taberu","kanji-食"]}}
+{"id":"r05","kind":"retrieval","description":"FR vocab query → 'interesting'","input":{"query":"l'adjectif japonais qui veut dire intéressant","topK":3},"expect":{"anySourceIn":["vocab-omoshiroi"]}}
+{"id":"r06","kind":"retrieval","description":"EN kanji query","input":{"query":"kanji that means eat or food","topK":3},"expect":{"anySourceIn":["kanji-食","vocab-taberu"]}}
+{"id":"r07","kind":"retrieval","description":"AR JLPT overview query","input":{"query":"ما هي مواضيع مستوى JLPT للمبتدئين N5","topK":3},"expect":{"anySourceIn":["jlpt-n5-overview"]}}
+{"id":"r08","kind":"retrieval","description":"EN explanation query → honorifics","input":{"query":"difference between honorific and humble Japanese speech","topK":3},"expect":{"anySourceIn":["expl-honorifics"]}}

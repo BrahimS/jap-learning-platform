@@ -5,7 +5,7 @@ import { MockProvider } from './providers/mock.js';
 import type { AiProvider } from './providers/types.js';
 import { RateLimiter } from './rate-limit/limiter.js';
 import { createLogger, type AiLogger } from './logging/logger.js';
-import { NOOP_RETRIEVER, type Retriever } from './pipelines/retrieval.js';
+import { NOOP_RETRIEVER, IndexedRetriever, type Retriever } from './pipelines/retrieval.js';
 import {
   runEmbedding,
   runGrammarExplain,
@@ -72,7 +72,7 @@ export interface AiServiceDeps {
   config?: AiConfig;
   /** Override provider (tests, self-hosted endpoints, future providers). */
   provider?: AiProvider;
-  /** RAG retriever — defaults to no-op until curriculum indexing lands (#14/#15). */
+  /** RAG retriever — defaults to corpus index when AI_CORPUS_INDEX is set, else no-op. */
   retriever?: Retriever;
   usageSink?: UsageSink;
   logger?: AiLogger;
@@ -135,6 +135,11 @@ export interface AiService {
     latencyMs: number;
   }>;
   embed(input: { texts: string[] }): Promise<AiResult<number[][]>>;
+  /** Raw retrieval — returns fenced curriculum context + source IDs. */
+  retrieve(
+    query: string,
+    opts?: import('./pipelines/retrieval.js').RetrieveOptions,
+  ): Promise<import('./prompts/templates.js').RetrievedContext>;
 
   /** Web-standard endpoint handlers — mount as `export const POST = service.handlers.X`. */
   handlers: {
@@ -192,7 +197,27 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
       ? new MockProvider()
       : new HuggingFaceProvider(config));
 
-  const retriever = deps.retriever ?? NOOP_RETRIEVER;
+  // RAG retriever: explicit dep > AI_CORPUS_INDEX file > no-op. A missing or
+  // malformed index degrades to no retrieval (grounded:false) — never fatal.
+  let retriever: Retriever;
+  if (deps.retriever) {
+    retriever = deps.retriever;
+  } else if (process.env.AI_CORPUS_INDEX) {
+    try {
+      retriever = IndexedRetriever.fromIndex(process.env.AI_CORPUS_INDEX, {
+        provider,
+        model: repoIdFor('embedding'),
+      });
+      logger.info('ai', 'corpus index loaded', { path: process.env.AI_CORPUS_INDEX });
+    } catch (err) {
+      logger.warn('ai', 'corpus index unavailable — retrieval disabled', {
+        message: err instanceof Error ? err.message : String(err),
+      });
+      retriever = NOOP_RETRIEVER;
+    }
+  } else {
+    retriever = NOOP_RETRIEVER;
+  }
   const llm = { provider, model: repoIdFor(deps.llmModel ?? 'llmPrimary') };
 
   async function retrieveFor(query: string) {
@@ -242,6 +267,7 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
     transcribe: (input) => runTranscription({ ...llm, model: repoIdFor('asr') }, input),
     synthesize: (input) => runSynthesis({ ...llm, model: repoIdFor('tts') }, input),
     embed: (input) => runEmbedding({ ...llm, model: repoIdFor('embedding') }, input),
+    retrieve: (query, opts) => retriever.retrieve(query, opts),
 
     handlers: {
       tutor: json(tutorBody, 'tutor', 'ai:tutor', (b) =>
