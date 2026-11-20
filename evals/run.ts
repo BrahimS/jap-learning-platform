@@ -27,6 +27,7 @@ import {
   type EvalReport,
 } from '../src/services/ai/evaluators/framework.js';
 import { z } from 'zod';
+import { MockProvider } from '../src/services/ai/providers/mock.js';
 
 const DATASETS_DIR = join(import.meta.dirname, 'datasets');
 const RESULTS_DIR = join(import.meta.dirname, 'results');
@@ -46,6 +47,94 @@ if (service.providerName === 'mock') {
 }
 const threshold = Number.parseFloat(values.threshold ?? '0.8');
 
+/**
+ * Smoke fixtures for the mock provider: schema-valid, case-aware output so
+ * `npm run eval` exercises executor → pipeline → validation → checkers →
+ * report end-to-end. Scores under mock are plumbing signal only — they say
+ * nothing about real model quality (see header comment).
+ */
+const LANG_TEXT: Record<string, { meaning: string; usage: string; gloss: string }> = {
+  en: {
+    meaning: 'to have done something before — life experience',
+    usage: 'used when talking about things you have done',
+    gloss: 'to eat — the action of eating something',
+  },
+  fr: {
+    meaning: 'avoir déjà fait quelque chose — une expérience',
+    usage: 'pour parler des choses que l’on a déjà faites',
+    gloss: 'manger — le fait de manger quelque chose',
+  },
+  ar: {
+    meaning: 'خبرة سابقة — فعل شيء من قبل',
+    usage: 'يُستخدم للحديث عن أشياء فعلها المرء من قبل',
+    gloss: 'يأكل — فعل تناول الطعام',
+  },
+  ja: {
+    meaning: '以前に何かをしたことがある — 経験',
+    usage: 'これまでに経験したことを話すときに使う',
+    gloss: '食べる — 食事をする動作',
+  },
+};
+
+function langText(lang: string | undefined) {
+  return LANG_TEXT[lang ?? 'en'] ?? LANG_TEXT['en']!;
+}
+
+function mockFixtureFor(c: EvalCase): string {
+  const input = c.input as {
+    language?: string;
+    structure?: string;
+    targetLang?: string;
+  };
+  const expect = c.expect as {
+    jlptLevel?: string | null;
+    coverageIn?: string[];
+    answerIncludes?: string;
+    targetIncludes?: string;
+  };
+  const lang = langText(input.language);
+
+  if (c.kind === 'quiz') {
+    const answer =
+      typeof expect.answerIncludes === 'string' ? expect.answerIncludes : 'sample answer';
+    return JSON.stringify({
+      questions: [
+        {
+          type: 'multiple_choice',
+          prompt: 'Select the correct answer.',
+          options: [answer, 'option B', 'option C'],
+          answer,
+          explanation: lang.usage,
+          jlptLevel: 'N5',
+        },
+      ],
+    });
+  }
+
+  if (c.kind === 'translation') {
+    const want =
+      typeof expect.targetIncludes === 'string' ? expect.targetIncludes : 'translation';
+    const gloss = langText(input.targetLang).gloss;
+    return JSON.stringify({ translation: `${want} — ${gloss}` });
+  }
+
+  // grammar / jlpt / hallucination / i18n all run the grammar pipeline.
+  return JSON.stringify({
+    structure: input.structure ?? 'mock structure',
+    meaning: lang.meaning,
+    usage: lang.usage,
+    jlptLevel: expect.jlptLevel ?? null,
+    curriculumCoverage: Array.isArray(expect.coverageIn) ? expect.coverageIn[0] : 'covered',
+    examples: [
+      { ja: 'これは例文です。', translation: lang.gloss },
+      { ja: 'もう一つの例文です。', translation: lang.gloss },
+    ],
+    comparison: { with: 'a similar structure', difference: lang.usage },
+    commonMistakes: ['a typical learner mistake'],
+    exercises: [{ prompt: 'practice prompt', answer: 'practice answer' }],
+  });
+}
+
 /** Map an eval case onto the right service pipeline. */
 const execute: EvalExecutor = async (c: EvalCase) => {
   const input = c.input as {
@@ -63,6 +152,11 @@ const execute: EvalExecutor = async (c: EvalCase) => {
     jlptLevel?: string;
   };
   const language = input.language ?? 'en';
+
+  // Under the mock provider, install a case-aware fixture (match '' hits any prompt).
+  if (service.provider instanceof MockProvider) {
+    service.provider.cannedResponses = [{ match: '', content: mockFixtureFor(c) }];
+  }
 
   switch (c.kind) {
     case 'grammar':
