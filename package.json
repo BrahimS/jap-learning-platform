@@ -1,0 +1,23 @@
+{
+  "name": "jap-learning-platform",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AI-assisted Japanese learning platform (JLPT-focused)",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
