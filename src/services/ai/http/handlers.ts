@@ -85,6 +85,13 @@ export const translateBody = z.object({
   targetLang: z.string().length(2),
 });
 
+/** RAG learning assistant question (§8.5). */
+export const askBody = z.object({
+  userRef: z.string().max(128).optional(),
+  language,
+  question: z.string().min(1).max(4000),
+});
+
 /** "Report incorrect answer" endpoint body (§8.6). */
 export const reportBody = reportSchema;
 

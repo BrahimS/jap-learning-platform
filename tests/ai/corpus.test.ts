@@ -52,7 +52,7 @@ describe('corpus jsonl', () => {
   it('round-trips validated chunks', () => {
     const dir = mkdtempSync(join(tmpdir(), 'corpus-'));
     const path = join(dir, 'c.jsonl');
-    const rows = [
+    const rows: CurriculumChunk[] = [
       { id: 'a', kind: 'grammar', text: 'test', reviewed: true, jlptLevel: 'N4' },
       { id: 'b', kind: 'vocabulary', text: 'word', reviewed: false },
     ];

@@ -72,6 +72,14 @@ function mockWithCanned() {
       }),
     },
     {
+      match: 'assistant probe question',
+      content: JSON.stringify({
+        answer: '〜たことがある expresses experience (have done before).',
+        curriculumCoverage: 'covered',
+        followUp: 'Try 〜経験がある next.',
+      }),
+    },
+    {
       match: 'TRANSLATE_ME',
       content: JSON.stringify({ translation: 'Hello', backTranslation: 'こんにちは' }),
     },
@@ -201,5 +209,48 @@ describe('AiService HTTP handlers', () => {
     const body = await res.json();
     expect(body.result.audioBase64.length).toBeGreaterThan(0);
     expect(body.result.mimeType).toBe('audio/wav');
+  });
+});
+
+describe('RAG assistant (#15)', () => {
+  it('answers with provenance from the retriever', async () => {
+    const retriever = {
+      retrieve: async () => ({
+        sourceIds: ['gram-takoto-ga-aru'],
+        text: '<chunk id="gram-takoto-ga-aru">exp</chunk>',
+      }),
+    };
+    const svc2 = createAiService({
+      config,
+      provider: mockWithCanned(),
+      retriever,
+      usageSink: new InMemoryUsageSink(),
+    });
+    const res = await svc2.assistant({
+      language: 'en',
+      question: 'assistant probe question',
+    });
+    expect(res.data.curriculumCoverage).toBe('covered');
+    expect(res.data.answer).toContain('experience');
+    expect(res.provenance?.sources).toEqual(['gram-takoto-ga-aru']);
+    expect(res.provenance?.grounded).toBe(true);
+  });
+
+  it('ask handler validates body and returns grounded answer', async () => {
+    const { svc } = makeService();
+    const res = await svc.handlers.ask(
+      post('/ask', { language: 'fr', question: 'assistant probe question' }),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.result.curriculumCoverage).toBe('covered');
+    expect(body.meta.provenance).toBeDefined();
+  });
+
+  it('ask handler rejects invalid body', async () => {
+    const { svc } = makeService();
+    const res = await svc.handlers.ask(post('/ask', { language: 'en' }));
+    expect(res.status).toBe(400);
   });
 });

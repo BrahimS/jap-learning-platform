@@ -1,6 +1,7 @@
 import type { AiProvider } from '../providers/types.js';
 import type { AiResult, ChatMessage, ExplanationLanguage, Provenance } from '../types.js';
 import {
+  assistantAnswerSchema,
   grammarExplanationSchema,
   quizSchema,
   transcriptSchema,
@@ -8,6 +9,7 @@ import {
   translationResultSchema,
   vocabularyEntrySchema,
   writingCorrectionSchema,
+  type AssistantAnswer,
   type GrammarExplanation,
   type Quiz,
   type Transcript,
@@ -18,6 +20,7 @@ import {
 } from '../evaluators/schemas.js';
 import { parseModelJson } from '../evaluators/schemas.js';
 import {
+  assistantMessages,
   grammarExplainMessages,
   quizMessages,
   tutorMessages,
@@ -157,6 +160,24 @@ export async function runTranslation(
     messages,
     translationResultSchema,
     'translation',
+  );
+}
+
+/**
+ * RAG learning assistant (§8.5; issue #15). Answers are grounded in retrieved
+ * curriculum chunks; the model must declare coverage honestly and abstain
+ * rather than invent content. Provenance carries the source chunk IDs.
+ */
+export async function runAssistant(
+  deps: PipelineDeps,
+  input: { language: ExplanationLanguage; question: string; retrieved?: RetrievedContext | undefined },
+): Promise<AiResult<AssistantAnswer>> {
+  return runStructuredChat(
+    { ...deps, capability: 'assistant' },
+    assistantMessages(input.language, input.question, input.retrieved),
+    assistantAnswerSchema,
+    'assistant',
+    provOf(input.retrieved),
   );
 }
 

@@ -130,6 +130,32 @@ export function quizMessages(
   ];
 }
 
+export function assistantMessages(
+  language: ExplanationLanguage,
+  question: string,
+  ctx?: RetrievedContext,
+) {
+  return [
+    {
+      role: 'system' as const,
+      content:
+        systemPrompt(
+          language,
+          'You are a Japanese-learning assistant that answers ONLY from the retrieved curriculum ' +
+            'content inside <curriculum> tags. ' +
+            'Rules: (1) If the curriculum covers the question, answer concisely in ' +
+            `${lang(language)} using the retrieved content, citing it naturally. ` +
+            '(2) If coverage is partial, answer what is covered and say what is missing. ' +
+            '(3) If the curriculum does NOT cover it, say so explicitly — e.g. "This is not covered ' +
+            'in the current curriculum" — and set curriculumCoverage to "not_covered". NEVER invent ' +
+            'grammar rules, JLPT levels, or facts. (4) Set curriculumCoverage to "covered", "partial", ' +
+            'or "not_covered" accurately. (5) Optionally suggest one follow-up step.',
+        ) + fenceContext(ctx),
+    },
+    { role: 'user' as const, content: question },
+  ];
+}
+
 export function writingCorrectionMessages(
   language: ExplanationLanguage,
   sentence: string,

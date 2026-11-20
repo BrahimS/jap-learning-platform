@@ -7,6 +7,7 @@ import { RateLimiter } from './rate-limit/limiter.js';
 import { createLogger, type AiLogger } from './logging/logger.js';
 import { NOOP_RETRIEVER, IndexedRetriever, type Retriever } from './pipelines/retrieval.js';
 import {
+  runAssistant,
   runEmbedding,
   runGrammarExplain,
   runQuiz,
@@ -19,6 +20,7 @@ import {
 } from './pipelines/capabilities.js';
 import type { AiResult, ExplanationLanguage } from './types.js';
 import {
+  askBody,
   embedBody,
   grammarBody,
   handleAiJson,
@@ -32,6 +34,7 @@ import {
   type HandlerDeps,
 } from './http/handlers.js';
 import type {
+  AssistantAnswer,
   GrammarExplanation,
   Quiz,
   Transcript,
@@ -135,6 +138,11 @@ export interface AiService {
     latencyMs: number;
   }>;
   embed(input: { texts: string[] }): Promise<AiResult<number[][]>>;
+  /** RAG-grounded Q&A — abstains when curriculum doesn't cover the question. */
+  assistant(input: {
+    language: ExplanationLanguage;
+    question: string;
+  }): Promise<AiResult<AssistantAnswer>>;
   /** Raw retrieval — returns fenced curriculum context + source IDs. */
   retrieve(
     query: string,
@@ -153,6 +161,8 @@ export interface AiService {
     synthesize: (req: Request) => Promise<Response>;
     embed: (req: Request) => Promise<Response>;
     report: (req: Request) => Promise<Response>;
+    /** POST — RAG learning assistant (grounded Q&A with provenance). */
+    ask: (req: Request) => Promise<Response>;
     /** GET — aggregated usage/cost summary. ADMIN-ONLY: protect at the host. */
     usage: (req: Request) => Promise<Response>;
   };
@@ -235,7 +245,17 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
 
   const json = <B, R extends { data: unknown }>(
     schema: z.ZodType<B>,
-    capability: 'tutor' | 'grammar' | 'vocabulary' | 'quiz' | 'writing' | 'asr' | 'tts' | 'embedding' | 'translation',
+    capability:
+      | 'tutor'
+      | 'grammar'
+      | 'vocabulary'
+      | 'quiz'
+      | 'writing'
+      | 'asr'
+      | 'tts'
+      | 'embedding'
+      | 'translation'
+      | 'assistant',
     scope: string,
     fn: (body: B) => Promise<AiResult<R['data']>>,
   ) => (req: Request) => handleAiJson(req, handlerDeps, { schema, capability, scope, fn });
@@ -268,6 +288,10 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
     synthesize: (input) => runSynthesis({ ...llm, model: repoIdFor('tts') }, input),
     embed: (input) => runEmbedding({ ...llm, model: repoIdFor('embedding') }, input),
     retrieve: (query, opts) => retriever.retrieve(query, opts),
+    assistant: (input) =>
+      retrieveFor(input.question).then((retrieved) =>
+        runAssistant(llm, { ...input, retrieved }),
+      ),
 
     handlers: {
       tutor: json(tutorBody, 'tutor', 'ai:tutor', (b) =>
@@ -325,6 +349,9 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
         };
       }),
       embed: json(embedBody, 'embedding', 'ai:embed', (b) => service.embed({ texts: b.texts })),
+      ask: json(askBody, 'assistant', 'ai:ask', (b) =>
+        service.assistant({ language: b.language, question: b.question }),
+      ),
       report: (req: Request) => handleReportRequest(req, reportDeps),
       usage: (req: Request) => handleUsageRequest(req, { usage }),
     },
