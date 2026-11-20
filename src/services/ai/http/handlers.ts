@@ -146,7 +146,11 @@ export async function handleAiJson<B, R extends { data: unknown }>(
   }
   const body = parsed.data as B & { userRef?: string };
 
-  const limitKey = body.userRef ?? req.headers.get('x-forwarded-for') ?? 'anonymous';
+  const limitKey =
+    body.userRef ??
+    req.headers.get('x-user-id') ??
+    req.headers.get('x-forwarded-for') ??
+    'anonymous';
   const decision = deps.rateLimiter.check(`${opts.capability}:${limitKey}`);
   if (!decision.allowed) {
     return jsonResponse(429, {
