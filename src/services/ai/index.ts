@@ -36,6 +36,34 @@ export {
   parseModelJson,
   JLPT_LEVELS,
 } from './evaluators/schemas.js';
+export {
+  evalCaseSchema,
+  EVAL_KINDS,
+  langScriptCheck,
+  listDatasets,
+  loadJsonlDataset,
+  reportToJson,
+  reportToMarkdown,
+  runDataset,
+  writeReport,
+} from './evaluators/framework.js';
+export type {
+  CaseResult,
+  CheckResult,
+  EvalCase,
+  EvalExecutor,
+  EvalKind,
+  EvalReport,
+  RunOptions,
+} from './evaluators/framework.js';
+export {
+  InMemoryFeedbackStore,
+  JsonlFeedbackStore,
+  nextReportId,
+  reportSchema,
+  reportToEvalCase,
+} from './evaluators/feedback.js';
+export type { FeedbackStore, IncorrectAnswerReport, StoredReport } from './evaluators/feedback.js';
 export { AiError } from './types.js';
 export type {
   AiCapability,

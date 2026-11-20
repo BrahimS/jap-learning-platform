@@ -1,0 +1,9 @@
+{"id":"t01","kind":"translation","description":"ja->en verb","input":{"language":"en","text":"食べる","sourceLang":"ja","targetLang":"en"},"expect":{"targetIncludes":"eat"}}
+{"id":"t02","kind":"translation","description":"ja->fr verb","input":{"language":"fr","text":"食べる","sourceLang":"ja","targetLang":"fr"},"expect":{"targetIncludes":"manger"}}
+{"id":"t03","kind":"translation","description":"ja->ar verb","input":{"language":"ar","text":"食べる","sourceLang":"ja","targetLang":"ar"},"expect":{"targetIncludes":"يأكل"}}
+{"id":"t04","kind":"translation","description":"ja->en thanks","input":{"language":"en","text":"ありがとう","sourceLang":"ja","targetLang":"en"},"expect":{"targetIncludes":"thank"}}
+{"id":"t05","kind":"translation","description":"ja->fr thanks","input":{"language":"fr","text":"ありがとう","sourceLang":"ja","targetLang":"fr"},"expect":{"targetIncludes":"merci"}}
+{"id":"t06","kind":"translation","description":"ja->ar thanks","input":{"language":"ar","text":"ありがとう","sourceLang":"ja","targetLang":"ar"},"expect":{"targetIncludes":"شكرا"}}
+{"id":"t07","kind":"translation","description":"ja->en student","input":{"language":"en","text":"学生","sourceLang":"ja","targetLang":"en"},"expect":{"targetIncludes":"student"}}
+{"id":"t08","kind":"translation","description":"ja->fr go","input":{"language":"fr","text":"行く","sourceLang":"ja","targetLang":"fr"},"expect":{"targetIncludes":"aller"}}
+{"id":"t09","kind":"translation","description":"ja->en cold","input":{"language":"en","text":"寒い","sourceLang":"ja","targetLang":"en"},"expect":{"targetIncludes":"cold"}}

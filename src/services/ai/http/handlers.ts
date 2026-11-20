@@ -3,6 +3,12 @@ import { AiError, type AiCapability, type AiResult, type ExplanationLanguage } f
 import type { RateLimiter } from '../rate-limit/limiter.js';
 import type { UsageTracker } from '../usage/tracker.js';
 import type { AiLogger } from '../logging/logger.js';
+import {
+  nextReportId,
+  reportSchema,
+  type FeedbackStore,
+  type StoredReport,
+} from '../evaluators/feedback.js';
 
 /**
  * Server-side API endpoint handlers (§8.4). Built on Web-standard
@@ -78,6 +84,9 @@ export const translateBody = z.object({
   sourceLang: z.string().length(2),
   targetLang: z.string().length(2),
 });
+
+/** "Report incorrect answer" endpoint body (§8.6). */
+export const reportBody = reportSchema;
 
 export interface HandlerDeps {
   rateLimiter: RateLimiter;
@@ -197,4 +206,69 @@ function metaOf(result: AiResult<unknown>) {
     usage: result.usage,
     provenance: result.provenance,
   };
+}
+
+export interface ReportHandlerDeps {
+  rateLimiter: RateLimiter;
+  store: FeedbackStore;
+  logger: AiLogger;
+  maxBodyBytes?: number;
+}
+
+/**
+ * POST handler for incorrect-answer reports. Not model inference — no usage
+ * tokens consumed — but still rate-limited and validated.
+ */
+export async function handleReportRequest(
+  req: Request,
+  deps: ReportHandlerDeps,
+): Promise<Response> {
+  if (req.method !== 'POST') {
+    return jsonResponse(405, { ok: false, error: { code: 'METHOD', message: 'POST only' } });
+  }
+  let raw: unknown;
+  try {
+    const text = await req.text();
+    if (text.length > (deps.maxBodyBytes ?? 64 * 1024)) {
+      return jsonResponse(413, { ok: false, error: { code: 'BAD_REQUEST', message: 'Body too large' } });
+    }
+    raw = JSON.parse(text);
+  } catch {
+    return jsonResponse(400, { ok: false, error: { code: 'BAD_REQUEST', message: 'Invalid JSON body' } });
+  }
+
+  const parsed = reportSchema.safeParse(raw);
+  if (!parsed.success) {
+    return jsonResponse(400, {
+      ok: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'Invalid report',
+        issues: parsed.error.issues.slice(0, 10).map((i) => `${i.path.join('.')}: ${i.message}`),
+      },
+    });
+  }
+  const report = parsed.data;
+
+  const limitKey = report.userRef ?? req.headers.get('x-user-id') ?? 'anonymous';
+  const decision = deps.rateLimiter.check(`report:${limitKey}`);
+  if (!decision.allowed) {
+    return jsonResponse(429, {
+      ok: false,
+      error: { code: 'RATE_LIMITED', message: 'Too many reports' },
+      retryAfterSeconds: decision.retryAfterSeconds,
+    });
+  }
+
+  const stored: StoredReport = {
+    ...report,
+    id: nextReportId(),
+    at: new Date().toISOString(),
+  };
+  await deps.store.add(stored);
+  deps.logger.info('report', 'incorrect-answer report stored', {
+    capability: report.capability,
+    reportId: stored.id,
+  });
+  return jsonResponse(202, { ok: true, id: stored.id });
 }

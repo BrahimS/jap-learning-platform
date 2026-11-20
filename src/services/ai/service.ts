@@ -41,6 +41,12 @@ import type {
   VocabularyEntry,
   WritingCorrection,
 } from './evaluators/schemas.js';
+import {
+  InMemoryFeedbackStore,
+  JsonlFeedbackStore,
+  type FeedbackStore,
+} from './evaluators/feedback.js';
+import { handleReportRequest, type ReportHandlerDeps } from './http/handlers.js';
 import type { z } from 'zod';
 
 /**
@@ -59,6 +65,8 @@ export interface AiServiceDeps {
   usageSink?: UsageSink;
   logger?: AiLogger;
   rateLimiter?: RateLimiter;
+  /** Store for incorrect-answer reports. Default: in-memory; set AI_FEEDBACK_PATH for JSONL persistence. */
+  feedbackStore?: FeedbackStore;
   /** Chat model tier: 'llmPrimary' | 'llmCostTier' | 'llmMoE' | 'llmJapaneseSpecialist'. */
   llmModel?: ModelKey;
 }
@@ -117,12 +125,17 @@ export interface AiService {
     transcribe: (req: Request) => Promise<Response>;
     synthesize: (req: Request) => Promise<Response>;
     embed: (req: Request) => Promise<Response>;
+    report: (req: Request) => Promise<Response>;
   };
 
   /** Infra accessors for monitoring/diagnostics. */
   usage: UsageTracker;
   logger: AiLogger;
   providerName: string;
+  /** Active provider — exposed for eval/judge tooling; feature code should use pipelines. */
+  provider: AiProvider;
+  /** Incorrect-answer report store (feeds eval regression set, #16). */
+  feedback: FeedbackStore;
 }
 
 export function createAiService(deps: AiServiceDeps = {}): AiService {
@@ -148,6 +161,13 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
 
   const handlerDeps: HandlerDeps = { rateLimiter, usage, logger };
 
+  const feedback: FeedbackStore =
+    deps.feedbackStore ??
+    (process.env.AI_FEEDBACK_PATH
+      ? new JsonlFeedbackStore(process.env.AI_FEEDBACK_PATH)
+      : new InMemoryFeedbackStore());
+  const reportDeps: ReportHandlerDeps = { rateLimiter, store: feedback, logger };
+
   const json = <B, R extends { data: unknown }>(
     schema: z.ZodType<B>,
     capability: 'tutor' | 'grammar' | 'vocabulary' | 'quiz' | 'writing' | 'asr' | 'tts' | 'embedding' | 'translation',
@@ -157,6 +177,7 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
 
   const service: AiService = {
     providerName: provider.name,
+    provider,
 
     tutor: (input) =>
       retrieveFor(input.latestUserText).then((retrieved) =>
@@ -238,10 +259,12 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
         };
       }),
       embed: json(embedBody, 'embedding', 'ai:embed', (b) => service.embed({ texts: b.texts })),
+      report: (req: Request) => handleReportRequest(req, reportDeps),
     },
 
     usage,
     logger,
+    feedback,
   };
 
   return service;

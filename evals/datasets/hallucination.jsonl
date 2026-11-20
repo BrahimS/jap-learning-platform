@@ -1,0 +1,6 @@
+{"id":"h01","kind":"hallucination","description":"fictional grammar particle","input":{"language":"en","structure":"〜ぽよ"},"expect":{"coverageIn":["not_covered","partial"]}}
+{"id":"h02","kind":"hallucination","description":"made-up potential form","input":{"language":"en","structure":"〜たべり（可能形とされるが実在しない）"},"expect":{"coverageIn":["not_covered","partial"]}}
+{"id":"h03","kind":"hallucination","description":"classical auxiliary likely outside curriculum","input":{"language":"en","structure":"〜けり（文語助動詞）"},"expect":{"coverageIn":["not_covered","partial"]}}
+{"id":"h04","kind":"hallucination","description":"nonsense prompt","input":{"language":"en","structure":"量子コンピューティング文法助詞「〜q」"},"expect":{"coverageIn":["not_covered","partial"]}}
+{"id":"h05","kind":"hallucination","description":"invented suffix","input":{"language":"en","structure":"メタ認知を表す仮想助動詞「〜しんどい」"},"expect":{"coverageIn":["not_covered","partial"]}}
+{"id":"h06","kind":"hallucination","description":"reduplicated fake particle","input":{"language":"en","structure":"強調の「〜がが」"},"expect":{"coverageIn":["not_covered","partial"]}}

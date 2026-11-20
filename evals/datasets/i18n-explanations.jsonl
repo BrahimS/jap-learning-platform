@@ -1,0 +1,6 @@
+{"id":"i01","kind":"i18n","description":"polite forms in French","input":{"language":"fr","structure":"です・ます"},"expect":{"lang":"fr","minExamples":1}}
+{"id":"i02","kind":"i18n","description":"verb in English","input":{"language":"en","structure":"食べる（たべる）"},"expect":{"lang":"en","minExamples":1}}
+{"id":"i03","kind":"i18n","description":"progressive in Arabic","input":{"language":"ar","structure":"〜ている"},"expect":{"lang":"ar","minExamples":1}}
+{"id":"i04","kind":"i18n","description":"potential in French","input":{"language":"fr","structure":"可能形"},"expect":{"lang":"fr","minExamples":1}}
+{"id":"i05","kind":"i18n","description":"passive in Arabic","input":{"language":"ar","structure":"受身"},"expect":{"lang":"ar","minExamples":1}}
+{"id":"i06","kind":"i18n","description":"greeting in English","input":{"language":"en","structure":"こんにちは"},"expect":{"lang":"en","minExamples":1}}

@@ -1,0 +1,15 @@
+{"id":"g01","kind":"grammar","description":"experience grammar","input":{"language":"en","structure":"〜たことがある"},"expect":{"jlptLevel":"N4","minExamples":1}}
+{"id":"g02","kind":"grammar","description":"progressive","input":{"language":"en","structure":"〜ている"},"expect":{"jlptLevel":"N5","minExamples":1}}
+{"id":"g03","kind":"grammar","description":"potential form","input":{"language":"en","structure":"可能形"},"expect":{"jlptLevel":"N5","minExamples":1}}
+{"id":"g04","kind":"grammar","description":"passive voice","input":{"language":"en","structure":"受身（れる・られる）"},"expect":{"jlptLevel":"N4","minExamples":1}}
+{"id":"g05","kind":"grammar","description":"causative","input":{"language":"en","structure":"使役（せる・させる）"},"expect":{"jlptLevel":"N4","minExamples":1}}
+{"id":"g06","kind":"grammar","description":"it is not that","input":{"language":"en","structure":"〜わけではない"},"expect":{"jlptLevel":"N3","minExamples":1}}
+{"id":"g07","kind":"grammar","description":"proportional","input":{"language":"en","structure":"〜ば〜ほど"},"expect":{"jlptLevel":"N2","minExamples":1}}
+{"id":"g08","kind":"grammar","description":"have no choice but","input":{"language":"en","structure":"〜ざるを得ない"},"expect":{"jlptLevel":"N1","minExamples":1}}
+{"id":"g09","kind":"grammar","description":"while doing","input":{"language":"en","structure":"〜ながら"},"expect":{"jlptLevel":"N3","minExamples":1}}
+{"id":"g10","kind":"grammar","description":"hearsay","input":{"language":"en","structure":"〜そうだ（伝聞）"},"expect":{"jlptLevel":"N4","minExamples":1}}
+{"id":"g11","kind":"grammar","description":"humble language","input":{"language":"en","structure":"謙譲語"},"expect":{"jlptLevel":"N3","minExamples":1}}
+{"id":"g12","kind":"grammar","description":"conditional","input":{"language":"en","structure":"〜たら（条件）"},"expect":{"jlptLevel":"N5","minExamples":1}}
+{"id":"g13","kind":"grammar","description":"decide/come to","input":{"language":"en","structure":"〜ことにする・〜ことになる"},"expect":{"jlptLevel":"N4","minExamples":1}}
+{"id":"g14","kind":"grammar","description":"completion/regret","input":{"language":"en","structure":"〜てしまう"},"expect":{"jlptLevel":"N5","minExamples":1}}
+{"id":"g15","kind":"grammar","description":"honorific","input":{"language":"en","structure":"尊敬語（お〜になる）"},"expect":{"jlptLevel":"N4","minExamples":1}}

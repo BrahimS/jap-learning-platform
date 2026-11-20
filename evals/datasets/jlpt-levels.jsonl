@@ -1,0 +1,15 @@
+{"id":"j01","kind":"jlpt","description":"polite forms","input":{"language":"en","structure":"です・ます"},"expect":{"jlptLevel":"N5"}}
+{"id":"j02","kind":"jlpt","description":"conditional","input":{"language":"en","structure":"〜たら"},"expect":{"jlptLevel":"N5"}}
+{"id":"j03","kind":"jlpt","description":"progressive","input":{"language":"en","structure":"〜ている"},"expect":{"jlptLevel":"N5"}}
+{"id":"j04","kind":"jlpt","description":"potential","input":{"language":"en","structure":"可能形"},"expect":{"jlptLevel":"N5"}}
+{"id":"j05","kind":"jlpt","description":"passive","input":{"language":"en","structure":"受身"},"expect":{"jlptLevel":"N4"}}
+{"id":"j06","kind":"jlpt","description":"causative","input":{"language":"en","structure":"使役"},"expect":{"jlptLevel":"N4"}}
+{"id":"j07","kind":"jlpt","description":"volitional","input":{"language":"en","structure":"意向形"},"expect":{"jlptLevel":"N4"}}
+{"id":"j08","kind":"jlpt","description":"come to/decide","input":{"language":"en","structure":"〜ことになる・〜ことにする"},"expect":{"jlptLevel":"N4"}}
+{"id":"j09","kind":"jlpt","description":"reason","input":{"language":"en","structure":"〜わけ"},"expect":{"jlptLevel":"N3"}}
+{"id":"j10","kind":"jlpt","description":"while","input":{"language":"en","structure":"〜ながら"},"expect":{"jlptLevel":"N3"}}
+{"id":"j11","kind":"jlpt","description":"humble","input":{"language":"en","structure":"謙譲語"},"expect":{"jlptLevel":"N3"}}
+{"id":"j12","kind":"jlpt","description":"proportional","input":{"language":"en","structure":"〜ば〜ほど"},"expect":{"jlptLevel":"N2"}}
+{"id":"j13","kind":"jlpt","description":"no choice","input":{"language":"en","structure":"〜ざるを得ない"},"expect":{"jlptLevel":"N1"}}
+{"id":"j14","kind":"jlpt","description":"classical aux","input":{"language":"en","structure":"〜べし（文語）"},"expect":{"jlptLevel":"N1"}}
+{"id":"j15","kind":"jlpt","description":"respectful","input":{"language":"en","structure":"尊敬語"},"expect":{"jlptLevel":"N4"}}

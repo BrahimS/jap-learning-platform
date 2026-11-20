@@ -1,0 +1,8 @@
+{"id":"q01","kind":"quiz","description":"N5 noun","input":{"language":"en","type":"multiple_choice","topic":"basic nouns","count":1},"expect":{"answerIncludes":"apple"}}
+{"id":"q02","kind":"quiz","description":"N5 verb","input":{"language":"en","type":"multiple_choice","topic":"basic verbs","count":1},"expect":{"answerIncludes":"eat"}}
+{"id":"q03","kind":"quiz","description":"N5 noun movie","input":{"language":"en","type":"multiple_choice","topic":"hobbies","count":1},"expect":{"answerIncludes":"movie"}}
+{"id":"q04","kind":"quiz","description":"topic particle","input":{"language":"en","type":"multiple_choice","topic":"particles","count":1},"expect":{"answerIncludes":"は"}}
+{"id":"q05","kind":"quiz","description":"translation ja->en","input":{"language":"en","type":"translation","topic":"daily life","count":1},"expect":{"answerIncludes":"eat"}}
+{"id":"q06","kind":"quiz","description":"N4 past tense","input":{"language":"en","type":"sentence_completion","topic":"past tense","count":1},"expect":{"answerIncludes":"た"}}
+{"id":"q07","kind":"quiz","description":"JLPT style N5","input":{"language":"en","type":"jlpt_style","topic":"N5 grammar","count":1},"expect":{}}
+{"id":"q08","kind":"quiz","description":"reading comprehension","input":{"language":"en","type":"reading_comprehension","topic":"daily life","count":1},"expect":{}}
