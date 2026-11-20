@@ -11,8 +11,8 @@ import type {
 /**
  * Hugging Face provider (§8.4).
  * - chat:      HF Inference Providers router, OpenAI-compatible `/v1/chat/completions`
- * - embed:     classic Inference API `/models/{id}` (feature-extraction)
- * - transcribe/synthesize: classic Inference API task endpoints
+ * - embed:     hf-inference task endpoint `/models/{id}` (feature-extraction)
+ * - transcribe/synthesize: hf-inference task endpoints
  * Token is sent server-side only and never logged.
  */
 
