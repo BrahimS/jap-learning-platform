@@ -198,7 +198,8 @@ export function writingCorrectionMessages(
           language,
           'You correct Japanese learner writing. Identify each error (grammar, particles, conjugation, word ' +
             'choice), categorize it, explain each correction in ' +
-            `${lang(language)}, and provide one improved version of the full sentence.` +
+            `${lang(language)}, provide one improved version of the full sentence, ` +
+            'and up to 2 alternative natural phrasings at the same level.' +
             (criteria ? ` Evaluation criteria: ${criteria}.` : ''),
         ) + fenceContext(ctx),
     },

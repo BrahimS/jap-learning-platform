@@ -152,6 +152,8 @@ export const writingCorrectionSchema = z.object({
     }),
   ),
   improved: z.string(),
+  /** Up to 2 alternative phrasings of the corrected sentence. */
+  alternatives: z.array(z.string().min(1)).max(2).optional(),
   score: z.number().min(0).max(100).optional(),
 });
 export type WritingCorrection = z.infer<typeof writingCorrectionSchema>;
