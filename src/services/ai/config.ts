@@ -10,7 +10,7 @@ export interface AiConfig {
   hfToken: string | undefined;
   /** HF Inference Providers router base (OpenAI-compatible). */
   hfRouterBaseUrl: string;
-  /** Classic HF Inference API base (feature-extraction, ASR, TTS tasks). */
+  /** HF task-endpoint base (feature-extraction, ASR, TTS). Provider appends `/models/{id}`. */
   hfApiBaseUrl: string;
   /** Per-attempt request timeout. */
   requestTimeoutMs: number;
@@ -35,7 +35,9 @@ export interface AiConfigEnv {
 
 const DEFAULTS = {
   hfRouterBaseUrl: 'https://router.huggingface.co',
-  hfApiBaseUrl: 'https://api-inference.huggingface.co',
+  // Legacy api-inference.huggingface.co was retired Nov 2025; task endpoints
+  // now live under the hf-inference provider on the router.
+  hfApiBaseUrl: 'https://router.huggingface.co/hf-inference',
   requestTimeoutMs: 30_000,
   maxRetries: 2,
   retryBaseDelayMs: 500,

@@ -15,7 +15,7 @@ import type { RateLimiter } from '../../src/services/ai/rate-limit/limiter.js';
 const config: AiConfig = {
   hfToken: undefined,
   hfRouterBaseUrl: 'https://router.huggingface.co',
-  hfApiBaseUrl: 'https://api-inference.huggingface.co',
+  hfApiBaseUrl: 'https://router.huggingface.co/hf-inference',
   requestTimeoutMs: 1000,
   maxRetries: 0,
   retryBaseDelayMs: 1,
