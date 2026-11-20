@@ -88,6 +88,14 @@ export const translateBody = z.object({
 /** "Report incorrect answer" endpoint body (§8.6). */
 export const reportBody = reportSchema;
 
+/** Window shorthands for the usage endpoint. */
+const WINDOW_MS: Record<string, number> = {
+  '15m': 15 * 60_000,
+  '1h': 60 * 60_000,
+  '24h': 24 * 60 * 60_000,
+  '7d': 7 * 24 * 60 * 60_000,
+};
+
 export interface HandlerDeps {
   rateLimiter: RateLimiter;
   usage: UsageTracker;
@@ -271,4 +279,39 @@ export async function handleReportRequest(
     reportId: stored.id,
   });
   return jsonResponse(202, { ok: true, id: stored.id });
+}
+
+/**
+ * GET /ai/usage — aggregated usage/cost summary (issue #17).
+ * ADMIN-ONLY: mount behind authentication in the host app; the handler itself
+ * performs no auth. Query params: `?window=15m|1h|24h|7d` or `?since=<ISO>`.
+ */
+export async function handleUsageRequest(
+  req: Request,
+  deps: { usage: UsageTracker },
+): Promise<Response> {
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return jsonResponse(405, { ok: false, error: { code: 'METHOD', message: 'GET only' } });
+  }
+  const url = new URL(req.url);
+  const windowParam = url.searchParams.get('window') ?? '';
+  const sinceParam = url.searchParams.get('since') ?? undefined;
+  const windowMs = WINDOW_MS[windowParam];
+  const since =
+    sinceParam ??
+    (windowMs !== undefined ? new Date(Date.now() - windowMs).toISOString() : undefined);
+  if (sinceParam !== undefined && Number.isNaN(Date.parse(sinceParam))) {
+    return jsonResponse(400, {
+      ok: false,
+      error: { code: 'BAD_REQUEST', message: 'Invalid since parameter (expected ISO timestamp)' },
+    });
+  }
+  if (windowParam !== '' && windowMs === undefined) {
+    return jsonResponse(400, {
+      ok: false,
+      error: { code: 'BAD_REQUEST', message: 'Invalid window (expected 15m|1h|24h|7d)' },
+    });
+  }
+  const summary = deps.usage.summary({ ...(since !== undefined ? { since } : {}) });
+  return jsonResponse(200, { ok: true, summary });
 }
