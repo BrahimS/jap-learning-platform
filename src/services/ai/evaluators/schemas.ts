@@ -44,11 +44,17 @@ export const grammarExampleSchema = z.object({
   translation: z.string(),
 });
 
+/** Whether the topic is covered by reviewed curriculum content (§8.5/§8.6). */
+export const curriculumCoverage = z
+  .enum(['covered', 'partial', 'not_covered'])
+  .optional();
+
 export const grammarExplanationSchema = z.object({
   structure: z.string(),
   meaning: z.string(),
   usage: z.string(),
   jlptLevel: jlptLevel,
+  curriculumCoverage,
   examples: z.array(grammarExampleSchema).min(1),
   /** Side-by-side comparison with a similar structure. */
   comparison: z
@@ -81,6 +87,7 @@ export const vocabularyEntrySchema = z.object({
   synonyms: z.array(z.string()).optional(),
   antonyms: z.array(z.string()).optional(),
   jlptLevel: jlptLevel,
+  curriculumCoverage,
 });
 export type VocabularyEntry = z.infer<typeof vocabularyEntrySchema>;
 
