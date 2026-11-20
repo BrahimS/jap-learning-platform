@@ -181,6 +181,54 @@ export const assistantAnswerSchema = z.object({
 });
 export type AssistantAnswer = z.infer<typeof assistantAnswerSchema>;
 
+/** Curriculum catalog item a recommendation may reference (issue #8). */
+export const catalogItemSchema = z.object({
+  id: z.string().min(1).max(200),
+  kind: z.enum(['lesson', 'vocabulary', 'grammar', 'kanji', 'quiz', 'review', 'explanation']),
+  title: z.string().min(1).max(300),
+  jlptLevel: jlptLevel,
+  summary: z.string().max(1000).optional(),
+});
+export type CatalogItem = z.infer<typeof catalogItemSchema>;
+
+const catalogItemKind = z.enum(['lesson', 'vocabulary', 'grammar', 'kanji', 'quiz', 'review', 'explanation']);
+
+/** Learner performance snapshot fed to the recommender. */
+export const learnerStatsSchema = z.object({
+  weakAreas: z.array(z.string().max(200)).max(30).optional(),
+  recentScores: z
+    .array(z.object({ topic: z.string().max(200), score: z.number().min(0).max(100) }))
+    .max(100)
+    .optional(),
+  lessonsCompleted: z.array(z.string().max(200)).max(500).optional(),
+  reviewsDue: z.number().int().min(0).max(100000).optional(),
+});
+export type LearnerStats = z.infer<typeof learnerStatsSchema>;
+
+/**
+ * Learning-recommendation plan (§8.2; issue #8). Every recommendation's
+ * itemId is validated against the provided catalog AFTER model output —
+ * invented IDs are dropped deterministically (see runRecommendations).
+ */
+export const recommendationPlanSchema = z.object({
+  weakAreas: z.array(z.string().max(300)).max(20),
+  recommendations: z
+    .array(
+      z.object({
+        itemId: z.string().min(1).max(200),
+        kind: catalogItemKind,
+        reason: z.string().min(1).max(1000),
+        priority: z.enum(['high', 'medium', 'low']),
+      }),
+    )
+    .max(30),
+  studyPlan: z.object({
+    focus: z.string().min(1).max(500),
+    adjustments: z.array(z.string().max(500)).max(20),
+  }),
+});
+export type RecommendationPlan = z.infer<typeof recommendationPlanSchema>;
+
 /**
  * Parse a model's text output as JSON and validate against a schema.
  * Strips markdown code fences, throws VALIDATION_ERROR on failure.

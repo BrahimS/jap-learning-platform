@@ -2,16 +2,21 @@ import type { AiProvider } from '../providers/types.js';
 import type { AiResult, ChatMessage, ExplanationLanguage, Provenance } from '../types.js';
 import {
   assistantAnswerSchema,
+  catalogItemSchema,
   grammarExplanationSchema,
   quizSchema,
+  recommendationPlanSchema,
   transcriptSchema,
   tutorReplySchema,
   translationResultSchema,
   vocabularyEntrySchema,
   writingCorrectionSchema,
   type AssistantAnswer,
+  type CatalogItem,
   type GrammarExplanation,
+  type LearnerStats,
   type Quiz,
+  type RecommendationPlan,
   type Transcript,
   type TranslationResult,
   type TutorReply,
@@ -22,6 +27,7 @@ import { parseModelJson } from '../evaluators/schemas.js';
 import {
   assistantMessages,
   grammarExplainMessages,
+  recommendationMessages,
   quizMessages,
   tutorMessages,
   vocabularyMessages,
@@ -179,6 +185,47 @@ export async function runAssistant(
     'assistant',
     provOf(input.retrieved),
   );
+}
+
+/**
+ * Learning recommendations (§8.2; issue #8). The model proposes a plan from
+ * the learner profile + curriculum catalog; afterwards every recommendation
+ * itemId is checked against the catalog and invented IDs are dropped —
+ * recommendations can never reference content that doesn't exist.
+ */
+export async function runRecommendations(
+  deps: PipelineDeps,
+  input: {
+    language: ExplanationLanguage;
+    learnerLevel: string;
+    stats: LearnerStats;
+    catalog: CatalogItem[];
+    retrieved?: RetrievedContext | undefined;
+  },
+): Promise<AiResult<RecommendationPlan>> {
+  const catalog = input.catalog.map((c) => catalogItemSchema.parse(c));
+  const catalogText = catalog
+    .map((c) => `- id=${c.id} kind=${c.kind} level=${c.jlptLevel ?? 'any'}: ${c.title}${c.summary ? ` — ${c.summary}` : ''}`)
+    .join('\n');
+  const statsJson = JSON.stringify(input.stats);
+  const result = await runStructuredChat(
+    { ...deps, capability: 'recommendations' },
+    recommendationMessages(input.language, input.learnerLevel, statsJson, catalogText),
+    recommendationPlanSchema,
+    'recommendations',
+  );
+
+  // Deterministic catalog validation — drop any recommendation whose itemId
+  // is not a real catalog entry, and dedupe by itemId keeping highest priority.
+  const validIds = new Set(catalog.map((c) => c.id));
+  const priorityRank = { high: 0, medium: 1, low: 2 } as const;
+  const seen = new Set<string>();
+  const kept = result.data.recommendations
+    .filter((r) => validIds.has(r.itemId))
+    .sort((a, b) => priorityRank[a.priority] - priorityRank[b.priority])
+    .filter((r) => (seen.has(r.itemId) ? false : (seen.add(r.itemId), true)));
+
+  return { ...result, data: { ...result.data, recommendations: kept } };
 }
 
 export async function runTranscription(

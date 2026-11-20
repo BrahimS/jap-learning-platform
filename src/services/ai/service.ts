@@ -9,6 +9,7 @@ import { NOOP_RETRIEVER, IndexedRetriever, type Retriever } from './pipelines/re
 import {
   runAssistant,
   runEmbedding,
+  runRecommendations,
   runGrammarExplain,
   runQuiz,
   runSynthesis,
@@ -22,6 +23,7 @@ import type { AiResult, ExplanationLanguage } from './types.js';
 import {
   askBody,
   embedBody,
+  recommendBody,
   grammarBody,
   handleAiJson,
   quizBody,
@@ -35,8 +37,11 @@ import {
 } from './http/handlers.js';
 import type {
   AssistantAnswer,
+  CatalogItem,
   GrammarExplanation,
+  LearnerStats,
   Quiz,
+  RecommendationPlan,
   Transcript,
   TranslationResult,
   TutorReply,
@@ -143,6 +148,13 @@ export interface AiService {
     language: ExplanationLanguage;
     question: string;
   }): Promise<AiResult<AssistantAnswer>>;
+  /** Study recommendations validated against a real curriculum catalog. */
+  recommendations(input: {
+    language: ExplanationLanguage;
+    learnerLevel: string;
+    stats?: LearnerStats | undefined;
+    catalog: CatalogItem[];
+  }): Promise<AiResult<RecommendationPlan>>;
   /** Raw retrieval — returns fenced curriculum context + source IDs. */
   retrieve(
     query: string,
@@ -163,6 +175,8 @@ export interface AiService {
     report: (req: Request) => Promise<Response>;
     /** POST — RAG learning assistant (grounded Q&A with provenance). */
     ask: (req: Request) => Promise<Response>;
+    /** POST — learning recommendations validated against the catalog. */
+    recommend: (req: Request) => Promise<Response>;
     /** GET — aggregated usage/cost summary. ADMIN-ONLY: protect at the host. */
     usage: (req: Request) => Promise<Response>;
   };
@@ -255,7 +269,8 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
       | 'tts'
       | 'embedding'
       | 'translation'
-      | 'assistant',
+      | 'assistant'
+      | 'recommendations',
     scope: string,
     fn: (body: B) => Promise<AiResult<R['data']>>,
   ) => (req: Request) => handleAiJson(req, handlerDeps, { schema, capability, scope, fn });
@@ -292,6 +307,13 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
       retrieveFor(input.question).then((retrieved) =>
         runAssistant(llm, { ...input, retrieved }),
       ),
+    recommendations: (input) =>
+      runRecommendations(llm, {
+        language: input.language,
+        learnerLevel: input.learnerLevel,
+        stats: input.stats ?? {},
+        catalog: input.catalog,
+      }),
 
     handlers: {
       tutor: json(tutorBody, 'tutor', 'ai:tutor', (b) =>
@@ -351,6 +373,14 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
       embed: json(embedBody, 'embedding', 'ai:embed', (b) => service.embed({ texts: b.texts })),
       ask: json(askBody, 'assistant', 'ai:ask', (b) =>
         service.assistant({ language: b.language, question: b.question }),
+      ),
+      recommend: json(recommendBody, 'recommendations', 'ai:recommend', (b) =>
+        service.recommendations({
+          language: b.language,
+          learnerLevel: b.learnerLevel,
+          ...(b.stats ? { stats: b.stats } : {}),
+          catalog: b.catalog,
+        }),
       ),
       report: (req: Request) => handleReportRequest(req, reportDeps),
       usage: (req: Request) => handleUsageRequest(req, { usage }),
