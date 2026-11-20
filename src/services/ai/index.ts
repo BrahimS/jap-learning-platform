@@ -53,7 +53,15 @@ export {
 export { loadCorpusJsonl, saveIndexJsonl } from './corpus/jsonl.js';
 export { buildCorpusIndex } from './corpus/indexer.js';
 export {
+  align,
+  normalizeForSpeech,
+  verdictFor,
+  type DiffOp,
+  type DiffSegment,
+} from './pipelines/alignment.js';
+export {
   runAssistant,
+  runPronunciationCheck,
   runRecommendations,
   runTutor,
   runGrammarExplain,
@@ -78,6 +86,7 @@ export {
   catalogItemSchema,
   learnerStatsSchema,
   recommendationPlanSchema,
+  pronunciationFeedbackSchema,
   parseModelJson,
   JLPT_LEVELS,
 } from './evaluators/schemas.js';

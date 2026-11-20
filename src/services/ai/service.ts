@@ -11,6 +11,7 @@ import {
   runEmbedding,
   runRecommendations,
   runGrammarExplain,
+  runPronunciationCheck,
   runQuiz,
   runSynthesis,
   runTranscription,
@@ -23,6 +24,7 @@ import type { AiResult, ExplanationLanguage } from './types.js';
 import {
   askBody,
   embedBody,
+  pronounceBody,
   recommendBody,
   grammarBody,
   handleAiJson,
@@ -40,6 +42,7 @@ import type {
   CatalogItem,
   GrammarExplanation,
   LearnerStats,
+  PronunciationFeedback,
   Quiz,
   RecommendationPlan,
   Transcript,
@@ -136,6 +139,12 @@ export interface AiService {
     language?: ExplanationLanguage | undefined;
   }): Promise<AiResult<TranslationResult>>;
   transcribe(input: { audio: Uint8Array; mimeType: string }): Promise<AiResult<Transcript>>;
+  /** Pronunciation feedback: ASR transcript aligned against expected text. */
+  pronunciationCheck(input: {
+    expectedText: string;
+    audio: Uint8Array;
+    mimeType: string;
+  }): Promise<AiResult<PronunciationFeedback>>;
   synthesize(input: { text: string }): Promise<{
     audio: Uint8Array;
     mimeType: string;
@@ -170,6 +179,8 @@ export interface AiService {
     writing: (req: Request) => Promise<Response>;
     translate: (req: Request) => Promise<Response>;
     transcribe: (req: Request) => Promise<Response>;
+    /** POST — pronunciation feedback (ASR + alignment, deterministic). */
+    pronounce: (req: Request) => Promise<Response>;
     synthesize: (req: Request) => Promise<Response>;
     embed: (req: Request) => Promise<Response>;
     report: (req: Request) => Promise<Response>;
@@ -300,6 +311,8 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
     translate: (input) =>
       runTranslation(llm, { ...input, language: input.language ?? 'en' }),
     transcribe: (input) => runTranscription({ ...llm, model: repoIdFor('asr') }, input),
+    pronunciationCheck: (input) =>
+      runPronunciationCheck({ ...llm, model: repoIdFor('asr') }, input),
     synthesize: (input) => runSynthesis({ ...llm, model: repoIdFor('tts') }, input),
     embed: (input) => runEmbedding({ ...llm, model: repoIdFor('embedding') }, input),
     retrieve: (query, opts) => retriever.retrieve(query, opts),
@@ -356,6 +369,14 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
       transcribe: json(transcribeBody, 'asr', 'ai:transcribe', async (b) => {
         const audio = Uint8Array.from(Buffer.from(b.audioBase64, 'base64'));
         return service.transcribe({ audio, mimeType: b.mimeType });
+      }),
+      pronounce: json(pronounceBody, 'asr', 'ai:pronounce', async (b) => {
+        const audio = Uint8Array.from(Buffer.from(b.audioBase64, 'base64'));
+        return service.pronunciationCheck({
+          expectedText: b.expectedText,
+          audio,
+          mimeType: b.mimeType,
+        });
       }),
       synthesize: json(synthesizeBody, 'tts', 'ai:synthesize', async (b) => {
         const out = await service.synthesize({ text: b.text });

@@ -95,6 +95,14 @@ export const recommendBody = z.object({
   catalog: z.array(catalogItemSchema).min(1).max(500),
 });
 
+/** Pronunciation check: expected text + learner audio (issue #12). */
+export const pronounceBody = z.object({
+  userRef: z.string().max(128).optional(),
+  expectedText: z.string().min(1).max(1000),
+  audioBase64: z.string().min(1),
+  mimeType: z.string().regex(/^audio\//, 'mimeType must be audio/*'),
+});
+
 /** RAG learning assistant question (§8.5). */
 export const askBody = z.object({
   userRef: z.string().max(128).optional(),
