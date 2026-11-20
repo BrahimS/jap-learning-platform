@@ -22,6 +22,7 @@ export const reportSchema = z.object({
     'tts',
     'embedding',
     'translation',
+    'assistant',
   ]),
   /** Model registry ID that produced the flagged output. */
   model: z.string().max(200).optional(),
@@ -89,6 +90,7 @@ const CAPABILITY_TO_KIND: Record<AiCapability, EvalKind> = {
   tts: 'i18n',
   embedding: 'i18n',
   translation: 'translation',
+  assistant: 'i18n',
 };
 
 let counter = 0;

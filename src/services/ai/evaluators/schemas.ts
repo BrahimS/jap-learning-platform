@@ -170,6 +170,17 @@ export const translationResultSchema = z.object({
 });
 export type TranslationResult = z.infer<typeof translationResultSchema>;
 
+/** RAG learning assistant answer (§8.5; issue #15). */
+export const assistantAnswerSchema = z.object({
+  /** Answer in the user's explanation language; Japanese examples inline. */
+  answer: z.string().min(1),
+  /** Whether retrieved curriculum content covers the question — required here. */
+  curriculumCoverage: z.enum(['covered', 'partial', 'not_covered']),
+  /** Optional follow-up suggestion tied to curriculum. */
+  followUp: z.string().optional(),
+});
+export type AssistantAnswer = z.infer<typeof assistantAnswerSchema>;
+
 /**
  * Parse a model's text output as JSON and validate against a schema.
  * Strips markdown code fences, throws VALIDATION_ERROR on failure.

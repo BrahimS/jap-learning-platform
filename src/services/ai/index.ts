@@ -53,6 +53,7 @@ export {
 export { loadCorpusJsonl, saveIndexJsonl } from './corpus/jsonl.js';
 export { buildCorpusIndex } from './corpus/indexer.js';
 export {
+  runAssistant,
   runTutor,
   runGrammarExplain,
   runVocabulary,
@@ -72,6 +73,7 @@ export {
   writingCorrectionSchema,
   transcriptSchema,
   translationResultSchema,
+  assistantAnswerSchema,
   parseModelJson,
   JLPT_LEVELS,
 } from './evaluators/schemas.js';

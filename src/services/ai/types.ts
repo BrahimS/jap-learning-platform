@@ -11,7 +11,8 @@ export type AiCapability =
   | 'asr'
   | 'tts'
   | 'embedding'
-  | 'translation';
+  | 'translation'
+  | 'assistant';
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
