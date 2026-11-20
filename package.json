@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "eval": "tsx evals/run.ts",
-    "index:corpus": "tsx scripts/build-corpus-index.ts"
+    "index:corpus": "tsx scripts/build-corpus-index.ts",
+    "dev": "tsx server.ts",
+    "start": "tsx server.ts"
   },
   "dependencies": {
     "zod": "^4.1.0"
