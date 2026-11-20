@@ -229,6 +229,26 @@ export const recommendationPlanSchema = z.object({
 });
 export type RecommendationPlan = z.infer<typeof recommendationPlanSchema>;
 
+/** Pronunciation feedback from ASR + expected-text alignment (issue #12). */
+export const pronunciationFeedbackSchema = z.object({
+  expected: z.string(),
+  recognized: z.string(),
+  /** 0–1 character-level accuracy after normalization. */
+  accuracy: z.number().min(0).max(1),
+  verdict: z.enum(['good', 'fair', 'needs_work']),
+  /** Merged diff segments — only non-match ops are kept for feedback. */
+  issues: z
+    .array(
+      z.object({
+        op: z.enum(['replace', 'insert', 'delete']),
+        expected: z.string().optional(),
+        recognized: z.string().optional(),
+      }),
+    )
+    .max(100),
+});
+export type PronunciationFeedback = z.infer<typeof pronunciationFeedbackSchema>;
+
 /**
  * Parse a model's text output as JSON and validate against a schema.
  * Strips markdown code fences, throws VALIDATION_ERROR on failure.

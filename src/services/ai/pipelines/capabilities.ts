@@ -4,6 +4,7 @@ import {
   assistantAnswerSchema,
   catalogItemSchema,
   grammarExplanationSchema,
+  pronunciationFeedbackSchema,
   quizSchema,
   recommendationPlanSchema,
   transcriptSchema,
@@ -15,6 +16,7 @@ import {
   type CatalogItem,
   type GrammarExplanation,
   type LearnerStats,
+  type PronunciationFeedback,
   type Quiz,
   type RecommendationPlan,
   type Transcript,
@@ -35,6 +37,7 @@ import {
   type RetrievedContext,
 } from '../prompts/templates.js';
 import { runStructuredChat, type PipelineDeps } from './context.js';
+import { align, verdictFor } from './alignment.js';
 
 function provOf(retrieved?: RetrievedContext): Provenance {
   return retrieved && retrieved.sourceIds.length > 0
@@ -250,6 +253,39 @@ export async function runSynthesis(
   const started = Date.now();
   const out = await deps.provider.synthesize(deps.model, input.text);
   return { ...out, model: deps.model, latencyMs: Date.now() - started };
+}
+
+/**
+ * Pronunciation check (issue #12): transcribe learner audio with the ASR
+ * model, align against the expected Japanese text, and return structured
+ * feedback (accuracy + diff issues). Deterministic — no LLM involved.
+ */
+export async function runPronunciationCheck(
+  deps: PipelineDeps,
+  input: { expectedText: string; audio: Uint8Array; mimeType: string },
+): Promise<AiResult<PronunciationFeedback>> {
+  const started = Date.now();
+  const { text } = await deps.provider.transcribe(deps.model, input.audio, input.mimeType);
+  const { segments, accuracy } = align(input.expectedText, text);
+  const issues = segments
+    .filter((s) => s.op !== 'match')
+    .map((s) => ({
+      op: s.op as 'replace' | 'insert' | 'delete',
+      ...(s.expected !== undefined ? { expected: s.expected } : {}),
+      ...(s.recognized !== undefined ? { recognized: s.recognized } : {}),
+    }));
+  return {
+    data: pronunciationFeedbackSchema.parse({
+      expected: input.expectedText,
+      recognized: text,
+      accuracy,
+      verdict: verdictFor(accuracy),
+      issues,
+    }),
+    model: deps.model,
+    capability: 'asr',
+    latencyMs: Date.now() - started,
+  };
 }
 
 export async function runEmbedding(
