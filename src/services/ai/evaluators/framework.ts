@@ -22,6 +22,7 @@ export const EVAL_KINDS = [
   'jlpt',
   'hallucination',
   'i18n',
+  'retrieval',
 ] as const;
 export type EvalKind = (typeof EVAL_KINDS)[number];
 
@@ -161,6 +162,18 @@ function check(expect_: Record<string, unknown>, output: unknown): CheckResult[]
       name: 'coverage',
       pass,
       detail: `coverage=${coverage || '(unset)'} abstains=${abstains}; allowed=${allowed.join('|')}`,
+    });
+  }
+
+  if (Array.isArray(expect_.anySourceIn)) {
+    // Retrieval cases: output.sourceIds must intersect the allowed set.
+    const allowed = expect_.anySourceIn as string[];
+    const ids = Array.isArray(out.sourceIds) ? (out.sourceIds as unknown[]).map(String) : [];
+    const hit = ids.some((id) => allowed.includes(id));
+    results.push({
+      name: 'anySourceIn',
+      pass: hit,
+      detail: `sources=[${ids.join(',')}] allowed=${allowed.join('|')}`,
     });
   }
 

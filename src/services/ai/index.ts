@@ -35,7 +35,23 @@ export {
   type UsageSummary,
 } from './usage/metrics.js';
 export { createLogger, type AiLogger } from './logging/logger.js';
-export { NOOP_RETRIEVER, EmbeddingRetriever, type Retriever, type CorpusChunk } from './pipelines/retrieval.js';
+export {
+  NOOP_RETRIEVER,
+  EmbeddingRetriever,
+  IndexedRetriever,
+  REVIEWED_BOOST,
+  type Retriever,
+  type CorpusChunk,
+  type RetrieveOptions,
+} from './pipelines/retrieval.js';
+export {
+  CORPUS_KINDS,
+  curriculumChunkSchema,
+  type CorpusKind,
+  type CurriculumChunk,
+} from './corpus/types.js';
+export { loadCorpusJsonl, saveIndexJsonl } from './corpus/jsonl.js';
+export { buildCorpusIndex } from './corpus/indexer.js';
 export {
   runTutor,
   runGrammarExplain,

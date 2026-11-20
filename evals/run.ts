@@ -57,6 +57,10 @@ const execute: EvalExecutor = async (c: EvalCase) => {
     type?: 'multiple_choice' | 'sentence_completion' | 'translation' | 'reading_comprehension' | 'jlpt_style';
     topic?: string;
     count?: number;
+    query?: string;
+    topK?: number;
+    kinds?: string[];
+    jlptLevel?: string;
   };
   const language = input.language ?? 'en';
 
@@ -83,6 +87,14 @@ const execute: EvalExecutor = async (c: EvalCase) => {
           targetLang: input.targetLang ?? 'en',
         })
       ).data;
+    case 'retrieval':
+      return service.retrieve(input.query ?? '', {
+        ...(input.topK ? { topK: input.topK } : {}),
+        ...(input.kinds
+          ? { kinds: input.kinds as ('grammar' | 'vocabulary' | 'kanji' | 'jlpt' | 'explanation')[] }
+          : {}),
+        ...(input.jlptLevel ? { jlptLevel: input.jlptLevel } : {}),
+      });
   }
 };
 
