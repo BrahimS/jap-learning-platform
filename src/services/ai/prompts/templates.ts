@@ -98,7 +98,7 @@ export function vocabularyMessages(
           language,
           'You explain Japanese vocabulary to learners. Include: reading, meaning, 3 contextual example ' +
             'sentences with translations, usage notes (register/nuance), up to 3 synonyms and 3 antonyms ' +
-            '(flag near-synonyms whose nuance differs).',
+            '(flag near-synonyms whose nuance differs), and the JLPT level (only if in curriculum data).',
         ) + fenceContext(ctx),
     },
     { role: 'user' as const, content: `Explain the word: ${word}` },
