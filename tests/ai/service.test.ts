@@ -311,3 +311,31 @@ describe('learning recommendations (#8)', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('TTS audio cache (#13)', () => {
+  it('serves repeated phrases from cache', async () => {
+    let synthCalls = 0;
+    const base = new MockProvider();
+    const counting = {
+      name: 'mock',
+      chat: base.chat.bind(base),
+      embed: base.embed.bind(base),
+      transcribe: base.transcribe.bind(base),
+      synthesize: async (m: string, t: string) => {
+        synthCalls += 1;
+        return base.synthesize(m, t);
+      },
+    };
+    const svc = createAiService({
+      config,
+      provider: counting as never,
+      usageSink: new InMemoryUsageSink(),
+    });
+    const a = await svc.synthesize({ text: 'テスト' });
+    const b = await svc.synthesize({ text: 'テスト' });
+    const c = await svc.synthesize({ text: '別の文' });
+    expect(synthCalls).toBe(2);
+    expect(a.audio.length).toBe(b.audio.length);
+    expect(c.audio.length).toBeGreaterThan(0);
+  });
+});

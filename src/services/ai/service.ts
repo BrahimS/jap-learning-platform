@@ -100,6 +100,8 @@ export interface AiServiceDeps {
   usageAlerts?: (AlertThresholds & { onAlert?: (alert: UsageAlert) => void }) | undefined;
   /** JSON overrides for the cost table (same shape as AI_PRICING_JSON). */
   pricingOverrides?: string | undefined;
+  /** Max cached TTS clips (default 200, 0 disables). */
+  ttsCacheSize?: number | undefined;
   /** Chat model tier: 'llmPrimary' | 'llmCostTier' | 'llmMoE' | 'llmJapaneseSpecialist'. */
   llmModel?: ModelKey;
 }
@@ -261,6 +263,12 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
 
   const handlerDeps: HandlerDeps = { rateLimiter, usage, logger };
 
+  // TTS audio cache (issue #13): repeated phrases (vocab, example sentences,
+  // dialogue lines) are synthesized once. In-memory LRU — swap for shared
+  // cache (Redis/CDN) when the app scales.
+  const TTS_CACHE_MAX = deps.ttsCacheSize ?? 200;
+  const ttsCache = new Map<string, { audio: Uint8Array; mimeType: string }>();
+
   const feedback: FeedbackStore =
     deps.feedbackStore ??
     (process.env.AI_FEEDBACK_PATH
@@ -313,7 +321,26 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
     transcribe: (input) => runTranscription({ ...llm, model: repoIdFor('asr') }, input),
     pronunciationCheck: (input) =>
       runPronunciationCheck({ ...llm, model: repoIdFor('asr') }, input),
-    synthesize: (input) => runSynthesis({ ...llm, model: repoIdFor('tts') }, input),
+    synthesize: async (input) => {
+      const ttsModel = repoIdFor('tts');
+      const key = `${ttsModel}${input.text}`;
+      const hit = ttsCache.get(key);
+      if (hit) {
+        // Refresh LRU position.
+        ttsCache.delete(key);
+        ttsCache.set(key, hit);
+        return { ...hit, model: ttsModel, latencyMs: 0 };
+      }
+      const out = await runSynthesis({ ...llm, model: ttsModel }, input);
+      if (TTS_CACHE_MAX > 0) {
+        if (ttsCache.size >= TTS_CACHE_MAX) {
+          const oldest = ttsCache.keys().next().value;
+          if (oldest !== undefined) ttsCache.delete(oldest);
+        }
+        ttsCache.set(key, { audio: out.audio, mimeType: out.mimeType });
+      }
+      return out;
+    },
     embed: (input) => runEmbedding({ ...llm, model: repoIdFor('embedding') }, input),
     retrieve: (query, opts) => retriever.retrieve(query, opts),
     assistant: (input) =>
