@@ -77,6 +77,14 @@ const server = createServer((req, res) => {
   })();
 });
 
+server.on('error', (err) => {
+  if ((err as NodeJS.ErrnoException).code === 'EADDRINUSE') {
+    console.error(`Port ${port} already in use — another dev server is running, or set AI_PORT.`);
+    process.exit(1);
+  }
+  throw err;
+});
+
 server.listen(port, '127.0.0.1', () => {
   console.log(`AI dev server → http://127.0.0.1:${port}`);
   console.log(`provider: ${service.providerName} | corpus: ${process.env.AI_CORPUS_INDEX ?? '(none)'}`);
