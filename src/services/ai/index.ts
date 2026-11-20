@@ -52,6 +52,7 @@ export {
 } from './corpus/types.js';
 export { loadCorpusJsonl, saveIndexJsonl } from './corpus/jsonl.js';
 export { buildCorpusIndex } from './corpus/indexer.js';
+export { validateQuestion, validateQuiz, type RejectedQuestion } from './pipelines/quiz-validation.js';
 export {
   align,
   normalizeForSpeech,
