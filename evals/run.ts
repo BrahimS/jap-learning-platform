@@ -29,6 +29,13 @@ import {
 import { z } from 'zod';
 import { MockProvider } from '../src/services/ai/providers/mock.js';
 
+// Load .env.local (gitignored) for HF_TOKEN — real evals need it.
+try {
+  process.loadEnvFile('.env.local');
+} catch {
+  /* no env file */
+}
+
 const DATASETS_DIR = join(import.meta.dirname, 'datasets');
 const RESULTS_DIR = join(import.meta.dirname, 'results');
 

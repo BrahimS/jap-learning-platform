@@ -8,6 +8,7 @@ export { loadAiConfig, requireHfToken, type AiConfig } from './config.js';
 export { MODEL_REGISTRY, getModel, repoIdFor, type ModelEntry, type ModelKey } from './models/registry.js';
 export { HuggingFaceProvider } from './providers/huggingface.js';
 export { MockProvider } from './providers/mock.js';
+export { OllamaProvider, ollamaConfigFromEnv, type OllamaProviderConfig } from './providers/ollama.js';
 export type { AiProvider, ProviderChatOptions, ProviderChatResult } from './providers/types.js';
 export { RateLimiter, type RateLimitDecision } from './rate-limit/limiter.js';
 export {

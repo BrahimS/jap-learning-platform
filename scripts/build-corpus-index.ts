@@ -10,6 +10,13 @@
  */
 
 import { parseArgs } from 'node:util';
+
+// Load .env.local (gitignored) for HF_TOKEN — real embeddings need it.
+try {
+  process.loadEnvFile('.env.local');
+} catch {
+  /* no env file */
+}
 import { createAiService, repoIdFor } from '../src/services/ai/index.js';
 import { loadCorpusJsonl, saveIndexJsonl } from '../src/services/ai/corpus/jsonl.js';
 import { buildCorpusIndex } from '../src/services/ai/corpus/indexer.js';

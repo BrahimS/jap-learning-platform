@@ -13,6 +13,21 @@ npm run dev        # http://127.0.0.1:8787 — mock provider, no token needed
 
 Set `HF_TOKEN` (server-side only) to use real Hugging Face inference. Without it the service falls back to a deterministic mock provider.
 
+### Free local inference (self-host)
+
+`AI_PROVIDER=ollama` runs open models locally via [Ollama](https://ollama.com) — free, offline, private (the spec's self-host path). Verified setup:
+
+```bash
+# install: download ollama-darwin.tgz from ollama.com/download (universal binary)
+ollama serve &
+ollama pull qwen2.5:3b-instruct   # chat — best JSON compliance on CPU
+ollama pull qwen3-embedding:0.6b  # embeddings (1024-dim, fast)
+```
+
+`.env.local` (gitignored) already wires this: `AI_PROVIDER=ollama`, `AI_LOCAL_CHAT_MODEL`, `AI_LOCAL_EMBED_MODEL`, optional `AI_LOCAL_BASE_URL`. ASR/TTS throw `NOT_CONFIGURED` on the local provider — use the HF provider for those.
+
+**Hardware note:** verified on a 2013 Intel Xeon (CPU-only, ~6–15 tok/s). Small models handle simple capabilities (translate, embed, tutor) but struggle with the largest JSON schemas (full grammar explanations) — use `qwen3:8b`+ or HF Inference Providers for production quality.
+
 ## Endpoints
 
 All POST unless noted. Bodies are Zod-validated; errors are safe/public.
