@@ -11,6 +11,8 @@ npm install
 npm run dev        # http://127.0.0.1:8787 — mock provider, no token needed
 ```
 
+Open http://127.0.0.1:8787 in a browser for the built-in UI (tutor, grammar, quiz, TTS, RAG assistant…).
+
 Set `HF_TOKEN` (server-side only) to use real Hugging Face inference. Without it the service falls back to a deterministic mock provider.
 
 ### Free local inference (self-host)
