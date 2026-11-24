@@ -185,10 +185,10 @@ function renderQuestion(meta) {
   const qs = quizState.questions;
   if (quizState.i >= qs.length) return renderQuizEnd();
   const q = qs[quizState.i];
-  const input =
-    q.type === 'multiple_choice' || q.type === 'reading_comprehension'
-      ? `<div>${(q.options ?? []).map((o, i) => `<label class="q-opt" data-i="${i}"><input type="radio" name="q" value="${esc(o)}" style="display:none"> ${esc(o)}</label>`).join('')}</div>`
-      : `<input type="text" id="q-text" placeholder="Votre réponse…" style="width:100%" />`;
+  const hasOptions = Array.isArray(q.options) && q.options.length > 0;
+  const input = hasOptions
+    ? `<div>${q.options.map((o, i) => `<label class="q-opt" data-i="${i}"><input type="radio" name="q" value="${esc(o)}" style="display:none"> ${esc(o)}</label>`).join('')}</div>`
+    : `<input type="text" id="q-text" placeholder="Votre réponse…" style="width:100%" />`;
   const passage = q.passage ? `<p class="ja">${esc(q.passage)}</p>` : '';
   out('#quiz-out', `
     <div class="q-card">
@@ -209,14 +209,14 @@ function renderQuestion(meta) {
     }),
   );
   $('#q-check').addEventListener('click', () => checkAnswer(q));
-  $('#q-next').addEventListener('click', () => { quizState.i++; renderQuestion(); });
+  $('#q-next').onclick = () => { quizState.i++; renderQuestion(); };
 }
 
 function checkAnswer(q) {
-  const given =
-    q.type === 'multiple_choice' || q.type === 'reading_comprehension'
-      ? document.querySelector('input[name="q"]:checked')?.value
-      : $('#q-text')?.value.trim();
+  const hasOptions = Array.isArray(q.options) && q.options.length > 0;
+  const given = hasOptions
+    ? document.querySelector('input[name="q"]:checked')?.value
+    : $('#q-text')?.value.trim();
   if (!given) return toast('Répondez d’abord', 'err');
   const ok = given.trim().toLowerCase() === String(q.answer).trim().toLowerCase();
   if (ok) quizState.score++;
@@ -229,7 +229,6 @@ function checkAnswer(q) {
     <div class="card" style="margin-top:8px"><strong>Réponse:</strong> ${esc(q.answer)}<br/><span class="muted">${esc(q.explanation)}</span></div>`;
   $('#q-check').disabled = true;
   $('#q-next').textContent = quizState.i + 1 >= quizState.questions.length ? 'Voir le score' : 'Suivant →';
-  $('#q-next').onclick = () => { quizState.i++; renderQuestion(); };
 }
 
 function renderQuizEnd() {
@@ -305,7 +304,7 @@ $('#speak-form').addEventListener('submit', async (e) => {
 });
 
 // ---------- recommend ----------
-let catalog = [];
+let catalog = null;
 fetch('/catalog.json').then((r) => r.json()).then((c) => (catalog = c.items ?? [])).catch(() => {});
 $('#recommend-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -313,6 +312,11 @@ $('#recommend-form').addEventListener('submit', async (e) => {
   const btn = e.target.querySelector('button[type="submit"]');
   btn.disabled = true;
   try {
+    if (!catalog) {
+      const c = await fetch('/catalog.json').then((r) => r.json());
+      catalog = c.items ?? [];
+    }
+    if (!catalog.length) throw new Error('Catalogue vide — /catalog.json introuvable');
     const weak = $('#recommend-weak').value.trim();
     const { result, meta } = await api('/ai/recommend', {
       language: 'fr',
