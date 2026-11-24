@@ -11,6 +11,13 @@
 import { createServer } from 'node:http';
 import { createAiService } from './src/services/ai/index.js';
 
+// Load .env.local (gitignored) for HF_TOKEN etc. — optional, never committed.
+try {
+  process.loadEnvFile('.env.local');
+} catch {
+  /* no env file — rely on real environment */
+}
+
 const service = createAiService();
 const port = Number.parseInt(process.env.AI_PORT ?? '8787', 10);
 

@@ -2,6 +2,7 @@ import { loadAiConfig, type AiConfig } from './config.js';
 import { repoIdFor, type ModelKey } from './models/registry.js';
 import { HuggingFaceProvider } from './providers/huggingface.js';
 import { MockProvider } from './providers/mock.js';
+import { OllamaProvider, ollamaConfigFromEnv } from './providers/ollama.js';
 import type { AiProvider } from './providers/types.js';
 import { RateLimiter } from './rate-limit/limiter.js';
 import { createLogger, type AiLogger } from './logging/logger.js';
@@ -226,13 +227,17 @@ export function createAiService(deps: AiServiceDeps = {}): AiService {
     ...(isEventSource(durableSink) ? { source: durableSink } : {}),
   });
 
-  // Provider selection: explicit override > HF (when token present) > mock.
-  // AI_PROVIDER=mock forces the mock even with a token (local dev/e2e).
+  // Provider selection: explicit override > AI_PROVIDER env > HF (when token
+  // present) > mock. AI_PROVIDER=ollama|local uses a self-hosted OpenAI-compatible
+  // server (free, offline — §8.4 self-host path); =mock forces mock even with a token.
+  const aiProviderEnv = process.env.AI_PROVIDER;
   const provider: AiProvider =
     deps.provider ??
-    (process.env.AI_PROVIDER === 'mock' || !config.hfToken
-      ? new MockProvider()
-      : new HuggingFaceProvider(config));
+    (aiProviderEnv === 'ollama' || aiProviderEnv === 'local'
+      ? new OllamaProvider(ollamaConfigFromEnv())
+      : aiProviderEnv === 'mock' || !config.hfToken
+        ? new MockProvider()
+        : new HuggingFaceProvider(config));
 
   // RAG retriever: explicit dep > AI_CORPUS_INDEX file > no-op. A missing or
   // malformed index degrades to no retrieval (grounded:false) — never fatal.
