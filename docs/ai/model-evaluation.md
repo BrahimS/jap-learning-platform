@@ -2,10 +2,25 @@
 
 Issue: #2 · Spec: §8.1, §8.3, §8.7
 
-Status: **Proposal — pending maintainer approval.** This is the gate document required by §8.8
-before AI implementation begins. License fields below were verified against the Hugging Face Hub
-API on 2026-11-20. Quantities marked *(est.)* are engineering estimates pending the benchmark
-plan in §6 — they are not measured results.
+Status: **Approved — implementation merged.** This was the §8.8 gate document; all
+sub-issues shipped against these selections. License fields verified against the Hugging
+Face Hub API on 2026-11-20. Quantities marked *(est.)* remain engineering estimates —
+the benchmark plan in §6 is partially executed (see §7).
+
+## 0. Self-hosted inference option (added 2026-11-24, issue #41)
+
+`AI_PROVIDER=ollama` runs the same pipelines on local open weights — free, offline,
+no HF billing. Verified on CPU-only hardware (Intel Xeon, no GPU):
+
+- Chat: `qwen2.5:3b-instruct` (Ollama) — translate ✓, embed ✓; complex JSON schemas
+  (full grammar explanations) exceed reliable 3B-class CPU output — expect validation
+  failures, which the pipeline surfaces honestly as `VALIDATION_ERROR`.
+- Embeddings: `qwen3-embedding:0.6b` — 1024-dim, ~2s/batch on CPU.
+- ASR/TTS: not available locally — `NOT_CONFIGURED`; needs whisper.cpp / Piper sidecars
+  or the HF provider.
+
+For production quality use HF Inference Providers (needs the token's Inference
+Providers permission) or a larger self-hosted model on GPU.
 
 ## 1. Selection principles
 
@@ -155,3 +170,15 @@ This is the least mature category; a spike task is required before committing (�
 7. Cost/latency: measure p50/p95 on chosen serving path; record in this doc.
 
 Results will be appended here and to `docs/ai/` before the gate is considered passed.
+
+## 7. First real results (2026-11-24, local self-host)
+
+Provider: Ollama on CPU-only Intel Xeon (no GPU) — `qwen2.5:3b-instruct` chat,
+`qwen3-embedding:0.6b` embeddings. Dataset: `translation` (9 cases).
+
+- Result: **5/9 (55.6%)** — below the 80% gate, as expected for a 3B CPU model vs the
+  Qwen3-32B target. Failures are honest quality signal: Arabic renderings differed
+  lexically, one "student" case missed, one JSON-parse error.
+- Latency: ~8s/translation, ~2s embedding batch — usable for dev, not production.
+- Conclusion: self-host path works mechanically end-to-end; production quality still
+  requires HF Inference Providers or GPU self-hosting per §6 benchmarks.
