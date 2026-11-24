@@ -1,0 +1,17 @@
+{
+  "items": [
+    { "id": "lesson-n5-greetings", "kind": "lesson", "title": "Salutations de base (N5)", "jlptLevel": "N5", "summary": "こんにちは、はじめまして、さようなら" },
+    { "id": "lesson-n5-particles", "kind": "lesson", "title": "Particules は・が・を (N5)", "jlptLevel": "N5", "summary": "Marqueurs de thème, sujet et objet" },
+    { "id": "lesson-n4-takoto-ga-aru", "kind": "grammar", "title": "〜たことがある — expérience", "jlptLevel": "N4", "summary": "Exprimer une expérience vécue" },
+    { "id": "lesson-n4-te-iru", "kind": "grammar", "title": "〜ている — progressif/état", "jlptLevel": "N4", "summary": "Action en cours ou état" },
+    { "id": "lesson-n3-tara", "kind": "grammar", "title": "〜たら — conditionnel", "jlptLevel": "N3", "summary": "Si… alors" },
+    { "id": "lesson-n3-zaru-wo-enai", "kind": "grammar", "title": "〜ざるを得ない — obligation", "jlptLevel": "N3", "summary": "Ne pas pouvoir faire autrement" },
+    { "id": "vocab-taberu", "kind": "vocabulary", "title": "食べる (たべる)", "jlptLevel": "N5", "summary": "Manger — verbe groupe 2" },
+    { "id": "vocab-iku", "kind": "vocabulary", "title": "行く (いく)", "jlptLevel": "N5", "summary": "Aller — verbe groupe 1" },
+    { "id": "vocab-omoshiroi", "kind": "vocabulary", "title": "面白い (おもしろい)", "jlptLevel": "N4", "summary": "Intéressant, amusant" },
+    { "id": "kanji-食", "kind": "kanji", "title": "食 — manger", "jlptLevel": "N5", "summary": "Radical nourriture" },
+    { "id": "quiz-n5-basics", "kind": "quiz", "title": "Quiz N5 — bases", "jlptLevel": "N5", "summary": "QCM vocabulaire et grammaire N5" },
+    { "id": "review-due", "kind": "review", "title": "Révision des erreurs récentes", "jlptLevel": "N5", "summary": "Refaire les items signalés" },
+    { "id": "expl-honorifics", "kind": "explanation", "title": "Politesse : です・ます vs humble", "jlptLevel": "N4", "summary": "Registres de langue" }
+  ]
+}

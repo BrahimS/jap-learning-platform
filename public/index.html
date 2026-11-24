@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>日本語 — Plateforme d'apprentissage</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="brand">日本語<span>Learn</span></div>
+      <nav id="nav">
+        <button data-view="tutor" class="nav-btn active">💬 Tuteur</button>
+        <button data-view="grammar" class="nav-btn">📐 Grammaire</button>
+        <button data-view="vocabulary" class="nav-btn">📖 Vocabulaire</button>
+        <button data-view="quiz" class="nav-btn">✏️ Quiz</button>
+        <button data-view="writing" class="nav-btn">🖊️ Écriture</button>
+        <button data-view="translate" class="nav-btn">⇄ Traduire</button>
+        <button data-view="ask" class="nav-btn">🔍 Demander</button>
+        <button data-view="speak" class="nav-btn">🔊 Écouter</button>
+        <button data-view="recommend" class="nav-btn">🧭 Réviser</button>
+      </nav>
+      <div id="provider-badge" class="badge">…</div>
+    </aside>
+
+    <main id="main">
+      <!-- TUTEUR -->
+      <section id="view-tutor" class="view active">
+        <h1>Tuteur IA</h1>
+        <div class="row">
+          <label>Niveau <select id="tutor-level"></select></label>
+          <label>Explications <select id="tutor-lang" class="lang-select"></select></label>
+        </div>
+        <div id="chat" class="chat"></div>
+        <form id="tutor-form" class="composer">
+          <input id="tutor-input" type="text" placeholder="Écrivez en japonais ou dans votre langue…" autocomplete="off" />
+          <button type="submit">Envoyer</button>
+        </form>
+      </section>
+
+      <!-- GRAMMAIRE -->
+      <section id="view-grammar" class="view">
+        <h1>Assistant grammaire</h1>
+        <form id="grammar-form" class="row-form">
+          <input id="grammar-structure" type="text" placeholder="Structure, ex. 〜たことがある" required />
+          <select id="grammar-lang" class="lang-select"></select>
+          <button type="submit">Expliquer</button>
+        </form>
+        <div id="grammar-out" class="out"></div>
+      </section>
+
+      <!-- VOCABULAIRE -->
+      <section id="view-vocabulary" class="view">
+        <h1>Assistant vocabulaire</h1>
+        <form id="vocab-form" class="row-form">
+          <input id="vocab-word" type="text" placeholder="Mot ou kanji, ex. 食べる" required />
+          <select id="vocab-lang" class="lang-select"></select>
+          <button type="submit">Expliquer</button>
+        </form>
+        <div id="vocab-out" class="out"></div>
+      </section>
+
+      <!-- QUIZ -->
+      <section id="view-quiz" class="view">
+        <h1>Générateur de quiz</h1>
+        <form id="quiz-form" class="row-form">
+          <select id="quiz-type">
+            <option value="multiple_choice">QCM</option>
+            <option value="sentence_completion">Texte à trous</option>
+            <option value="translation">Traduction</option>
+            <option value="reading_comprehension">Compréhension</option>
+            <option value="jlpt_style">Style JLPT</option>
+          </select>
+          <input id="quiz-topic" type="text" placeholder="Sujet (ex. nourriture)" />
+          <select id="quiz-level"><option value="">Tous niveaux</option></select>
+          <input id="quiz-count" type="number" min="1" max="10" value="3" title="Nombre" />
+          <select id="quiz-lang" class="lang-select"></select>
+          <button type="submit">Générer</button>
+        </form>
+        <div id="quiz-out" class="out"></div>
+      </section>
+
+      <!-- ÉCRITURE -->
+      <section id="view-writing" class="view">
+        <h1>Correction d'écriture</h1>
+        <form id="writing-form" class="row-form">
+          <input id="writing-sentence" type="text" placeholder="Votre phrase en japonais…" required />
+          <input id="writing-criteria" type="text" placeholder="Critères (optionnel)" />
+          <select id="writing-lang" class="lang-select"></select>
+          <button type="submit">Corriger</button>
+        </form>
+        <div id="writing-out" class="out"></div>
+      </section>
+
+      <!-- TRADUCTION -->
+      <section id="view-translate" class="view">
+        <h1>Traduction</h1>
+        <form id="translate-form" class="row-form">
+          <input id="translate-text" type="text" placeholder="Texte à traduire" required />
+          <select id="translate-from">
+            <option value="ja">日本語 →</option>
+            <option value="fr">Français →</option>
+            <option value="en">English →</option>
+            <option value="ar">العربية →</option>
+          </select>
+          <select id="translate-to">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="ja">日本語</option>
+            <option value="ar">العربية</option>
+          </select>
+          <button type="submit">Traduire</button>
+        </form>
+        <div id="translate-out" class="out"></div>
+      </section>
+
+      <!-- DEMANDER (RAG) -->
+      <section id="view-ask" class="view">
+        <h1>Assistant pédagogique</h1>
+        <p class="hint">Répond uniquement à partir du programme validé — sinon il s'abstient.</p>
+        <form id="ask-form" class="row-form">
+          <input id="ask-question" type="text" placeholder="Posez une question de grammaire, vocabulaire, JLPT…" required />
+          <select id="ask-lang" class="lang-select"></select>
+          <button type="submit">Demander</button>
+        </form>
+        <div id="ask-out" class="out"></div>
+      </section>
+
+      <!-- ÉCOUTER (TTS) -->
+      <section id="view-speak" class="view">
+        <h1>Écouter le japonais</h1>
+        <form id="speak-form" class="row-form">
+          <input id="speak-text" type="text" placeholder="Phrase en japonais à écouter…" required />
+          <button type="submit">🔊 Écouter</button>
+        </form>
+        <div id="speak-out" class="out"></div>
+        <audio id="speak-audio" controls hidden></audio>
+      </section>
+
+      <!-- RÉVISER -->
+      <section id="view-recommend" class="view">
+        <h1>Plan de révision</h1>
+        <form id="recommend-form" class="row-form">
+          <select id="recommend-level"><option value="">Niveau…</option></select>
+          <input id="recommend-weak" type="text" placeholder="Points faibles (ex. particules, kanji)" />
+          <button type="submit">Générer le plan</button>
+        </form>
+        <div id="recommend-out" class="out"></div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" hidden></div>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
