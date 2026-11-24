@@ -1,7 +1,7 @@
 import type { AiProvider } from '../providers/types.js';
 import type { AiCapability, AiResult, ChatMessage, Provenance, TokenUsage } from '../types.js';
 import { parseModelJson } from '../evaluators/schemas.js';
-import type { z } from 'zod';
+import { z } from 'zod';
 
 /** Shared pipeline plumbing: chat → JSON parse → schema validate → AiResult. */
 
@@ -31,6 +31,9 @@ export async function runStructuredChat<S extends z.ZodType>(
   const started = Date.now();
   const result = await deps.provider.chat(deps.model, messages, {
     jsonMode: deps.jsonMode ?? true,
+    // Constrained decoding where supported (Ollama format=JSON Schema) —
+    // small local models otherwise invent schema keys.
+    jsonSchema: z.toJSONSchema(schema),
     temperature: deps.temperature,
     maxTokens: deps.maxTokens,
   });

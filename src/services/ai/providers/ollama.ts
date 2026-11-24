@@ -85,15 +85,16 @@ export class OllamaProvider implements AiProvider {
   ): Promise<ProviderChatResult> {
     const local = localModelFor(model, this.config);
     // Native /api/chat: `think:false` is required — Qwen3-style reasoning
-    // models otherwise burn the whole token budget on hidden reasoning and
-    // return empty content. NOTE: `format:'json'` is deliberately NOT sent —
-    // the grammar constraint triggers repetition loops on small CPU models;
-    // prompts already demand JSON and parseModelJson validates the result.
+    // models otherwise burn the whole token budget on hidden reasoning.
+    // Bare format:'json' is deliberately omitted (grammar constraint loops
+    // small CPU models), but a full JSON Schema in `format` IS sent when the
+    // pipeline supplies one — constrained decoding guarantees shape.
     const body: Record<string, unknown> = {
       model: local,
       messages,
       stream: false,
       think: false,
+      ...(opts.jsonSchema ? { format: opts.jsonSchema } : {}),
       options: {
         temperature: opts.temperature ?? 0.3,
         num_predict: opts.maxTokens ?? 2048,

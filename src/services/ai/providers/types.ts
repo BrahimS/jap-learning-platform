@@ -7,6 +7,13 @@ export interface ProviderChatOptions {
   maxTokens?: number | undefined;
   /** Ask the provider for JSON-mode output where supported. */
   jsonMode?: boolean | undefined;
+  /**
+   * JSON Schema for constrained decoding (Ollama `format`, OpenAI
+   * `response_format: json_schema`). Providers that support it guarantee
+   * structurally valid output; others ignore it — Zod validation remains
+   * the authoritative check either way.
+   */
+  jsonSchema?: unknown;
 }
 
 export interface ProviderChatResult {
