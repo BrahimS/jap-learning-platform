@@ -9,6 +9,9 @@
  */
 
 import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { extname, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createAiService } from './src/services/ai/index.js';
 
 // Load .env.local (gitignored) for HF_TOKEN etc. — optional, never committed.
@@ -38,6 +41,32 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
   '/ai/usage': service.handlers.usage,
 };
 
+const PUBLIC_ROOT = fileURLToPath(new URL('./public', import.meta.url));
+
+const MIME: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
+};
+
+/** Resolve a GET path to a file inside public/ (null when missing/traversal). */
+async function serveStatic(pathname: string): Promise<{ body: Buffer; type: string } | null> {
+  const rel = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+  const file = resolve(PUBLIC_ROOT, rel);
+  if (!file.startsWith(PUBLIC_ROOT + sep)) return null;
+  try {
+    const body = await readFile(file);
+    return { body, type: MIME[extname(file)] ?? 'application/octet-stream' };
+  } catch {
+    return null;
+  }
+}
+
 function toRequest(req: import('node:http').IncomingMessage, body: Buffer): Request {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
   const headers = new Headers();
@@ -61,16 +90,24 @@ const server = createServer((req, res) => {
       for await (const c of req) chunks.push(c as Buffer);
       const request = toRequest(req, Buffer.concat(chunks));
       const url = new URL(request.url);
-      if (req.method === 'GET' && url.pathname === '/') {
-        res.writeHead(200, { 'content-type': 'application/json' });
-        res.end(
-          JSON.stringify({
-            ok: true,
-            provider: service.providerName,
-            routes: Object.keys(routes),
-          }),
-        );
-        return;
+      if (req.method === 'GET' || req.method === 'HEAD') {
+        if (url.pathname === '/api/status') {
+          res.writeHead(200, { 'content-type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              ok: true,
+              provider: service.providerName,
+              routes: Object.keys(routes),
+            }),
+          );
+          return;
+        }
+        const staticFile = await serveStatic(url.pathname);
+        if (staticFile) {
+          res.writeHead(200, { 'content-type': staticFile.type });
+          res.end(req.method === 'HEAD' ? undefined : staticFile.body);
+          return;
+        }
       }
       const handler = routes[url.pathname];
       if (!handler) {
