@@ -223,6 +223,25 @@ describe('AiService HTTP handlers', () => {
     expect(body.result.audioBase64.length).toBeGreaterThan(0);
     expect(body.result.mimeType).toBe('audio/wav');
   });
+
+  it('pronounce handler returns alignment feedback', async () => {
+    const { svc } = makeService();
+    const res = await svc.handlers.pronounce(
+      post('/pronounce', {
+        expectedText: 'こんにちは',
+        audioBase64: Buffer.from([1, 2, 3]).toString('base64'),
+        mimeType: 'audio/wav',
+      }),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.result.expected).toBe('こんにちは');
+    expect(body.result.recognized).toContain('[mock transcript');
+    expect(['good', 'fair', 'needs_work']).toContain(body.result.verdict);
+    expect(body.result.accuracy).toBeGreaterThanOrEqual(0);
+    expect(body.result.accuracy).toBeLessThanOrEqual(1);
+  });
 });
 
 describe('RAG assistant (#15)', () => {

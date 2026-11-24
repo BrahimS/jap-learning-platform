@@ -22,6 +22,7 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
   '/ai/writing': service.handlers.writing,
   '/ai/translate': service.handlers.translate,
   '/ai/transcribe': service.handlers.transcribe,
+  '/ai/pronounce': service.handlers.pronounce,
   '/ai/synthesize': service.handlers.synthesize,
   '/ai/embed': service.handlers.embed,
   '/ai/ask': service.handlers.ask,
@@ -52,7 +53,19 @@ const server = createServer((req, res) => {
       const chunks: Buffer[] = [];
       for await (const c of req) chunks.push(c as Buffer);
       const request = toRequest(req, Buffer.concat(chunks));
-      const handler = routes[new URL(request.url).pathname];
+      const url = new URL(request.url);
+      if (req.method === 'GET' && url.pathname === '/') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            ok: true,
+            provider: service.providerName,
+            routes: Object.keys(routes),
+          }),
+        );
+        return;
+      }
+      const handler = routes[url.pathname];
       if (!handler) {
         res.writeHead(404, { 'content-type': 'application/json' });
         res.end(JSON.stringify({ ok: false, error: { code: 'NOT_FOUND', message: 'Unknown route' } }));
